@@ -17,7 +17,10 @@ from src.ai_engine import generate_with_ai  # noqa: E402
 from src.coverage import analyze, render_report  # noqa: E402
 from src.formats import render_json, render_markdown  # noqa: E402
 from src.lint import lint_gherkin  # noqa: E402
+from src.quality import analyze_quality  # noqa: E402
 from src.rule_engine import build_feature, generate_from_text, parse_story, render_gherkin  # noqa: E402
+from src.similarity import find_duplicates, render_dedup_report  # noqa: E402
+from src.stubs import generate_stubs  # noqa: E402
 
 try:
     from dotenv import load_dotenv
@@ -55,7 +58,21 @@ def _generate(story: str, engine: str, fmt: str) -> tuple[str, object | None]:
     return FORMATTERS[fmt](feature), feature
 
 
-def _post_process(text: str, feature: object | None, args) -> None:
+def _post_process(text: str, feature: object | None, args, story: str = "") -> None:
+    if args.quality and feature is not None:
+        q = analyze_quality(parse_story(story))
+        print(f"Quality: {q['summary']}", file=sys.stderr)
+        for f in q["findings"]:
+            print(f"  [{f['severity']}] {f['message']}", file=sys.stderr)
+            print(f"    -> {f['suggestion']}", file=sys.stderr)
+    if args.dedup and feature is not None:
+        pairs = find_duplicates(feature.scenarios)
+        print(render_dedup_report(feature.scenarios, pairs), file=sys.stderr)
+    if args.stubs and feature is not None:
+        path = args.stubs if isinstance(args.stubs, str) else "test_stubs.py"
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(generate_stubs(feature, (args.output or "generated.feature")))
+        print(f"Wrote {path} [pytest-bdd stubs]", file=sys.stderr)
     if args.lint:
         issues = lint_gherkin(text)
         print("Lint: " + ("clean ✓" if not issues else f"{len(issues)} issue(s)"), file=sys.stderr)
@@ -79,7 +96,7 @@ def _single(args, engine: str) -> None:
         print(f"Wrote {args.output} [{engine} engine, {args.format}]")
     else:
         print(text, end="")
-    _post_process(text, feature, args)
+    _post_process(text, feature, args, story)
 
 
 def _batch(args, engine: str) -> None:
@@ -98,7 +115,7 @@ def _batch(args, engine: str) -> None:
         with open(out_path, "w", encoding="utf-8") as fh:
             fh.write(text)
         print(f"Wrote {out_path}")
-        _post_process(text, feature, args)
+        _post_process(text, feature, args, story)
 
 
 def main() -> None:
@@ -121,6 +138,12 @@ def main() -> None:
     )
     parser.add_argument("--report", action="store_true", help="Print a coverage report")
     parser.add_argument("--lint", action="store_true", help="Lint the generated output")
+    parser.add_argument("--quality", action="store_true",
+                        help="Score the requirement quality before generating")
+    parser.add_argument("--dedup", action="store_true",
+                        help="Detect near-duplicate scenarios (TF-IDF similarity)")
+    parser.add_argument("--stubs", nargs="?", const="test_stubs.py", metavar="FILE",
+                        help="Generate pytest-bdd step-definition stubs")
     args = parser.parse_args()
 
     engine = args.engine

@@ -48,8 +48,14 @@ generated file in the browser with coverage and lint results, plus a download bu
 # Auto engine, Gherkin output
 python -m src.cli -i examples/login_story.md -o login.feature
 
-# Offline rule engine, JSON catalog, with coverage + lint
-python -m src.cli -i examples/login_story.md --engine rule --format json --report --lint -o login.json
+# Score the requirement first, then generate with coverage + lint
+python -m src.cli -i examples/login_story.md --engine rule --quality --report --lint -o login.feature
+
+# Detect near-duplicate scenarios and generate pytest-bdd stubs
+python -m src.cli -i examples/login_story.md --dedup --stubs test_login_steps.py -o login.feature
+
+# Offline rule engine, JSON catalog
+python -m src.cli -i examples/login_story.md --engine rule --format json -o login.json
 
 # Markdown test plan
 python -m src.cli -i examples/login_story.md --format markdown -o plan.md
@@ -79,14 +85,26 @@ See [`examples/login.feature`](examples/login.feature) for generated output.
 
 ## Features
 
+### Generation
 - 🤖 **AI engine** — Azure OpenAI with a QA-engineer system prompt
 - ⚙️ **Offline rule engine** — zero dependencies, zero network calls
 - 🧬 **Scenario Outlines** — parenthesized value lists become `Examples` tables
 - 🛡️ **Negative scenarios** — validation, auth, and not-found cases auto-added
-- 📦 **Multi-format export** — Gherkin, JSON catalog, Markdown test plan
+
+### Quality engineering
+- 🎯 **Requirement quality scoring** — grades the story 0–100 (A–F) before generating:
+  detects vague untestable language ("fast", "user-friendly"), missing actors/goals,
+  compound criteria, and criteria with no observable outcome — each finding ships with a fix suggestion
+- 🔍 **Near-duplicate detection** — TF-IDF + cosine similarity flags copy-paste scenarios
+  so they can be merged into Scenario Outlines
 - 📊 **Coverage reports** — positive/negative/outline counts per requirement
-- 🔍 **Gherkin lint** — missing steps, duplicates, empty scenarios
-- 🌐 **Web UI** — generate, preview, and download in the browser
+- ✅ **Gherkin lint** — missing steps, duplicates, empty scenarios
+
+### From spec to executable suite
+- 🧪 **pytest-bdd stub generation** (`--stubs`) — turns the feature file into runnable
+  step-definition skeletons: shared steps deduped, `<placeholders>` become regex parsers
+- 📦 **Multi-format export** — Gherkin, JSON catalog, Markdown test plan
+- 🌐 **Web UI** — score, generate, preview, and download in the browser
 - 📁 **Batch mode** — convert whole folders of stories at once
 
 ## Setup
@@ -112,12 +130,17 @@ src/
   cli.py          argument parsing, engine selection, batch mode
   ai_engine.py    Azure OpenAI client + generation
   rule_engine.py  offline parser + structured Feature model + Gherkin renderer
+  quality.py      requirement quality scoring (vague language, structure, testability)
+  similarity.py   TF-IDF near-duplicate scenario detection
+  stubs.py        pytest-bdd step-definition stub generator
   formats.py      JSON catalog + Markdown test plan renderers
   coverage.py     coverage analysis + report
   lint.py         Gherkin structural lint
   prompts.py      system prompt for the AI engine
+docs/             browser demo (GitHub Pages): generator + quality scorer in JS
 examples/         sample requirement + generated feature file
-tests/            unit tests (rule engine, outlines, formats, coverage, lint)
+tests/            unit tests (rule engine, outlines, formats, coverage, lint,
+                  quality, similarity, stubs)
 ```
 
 ## License
