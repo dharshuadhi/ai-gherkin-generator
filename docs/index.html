@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Gherkin Generator</title>
+<style>
+  :root { --bg:#14121f; --card:#1e1a33; --line:#3b3355; --txt:#d6d0ea;
+          --lav:#a78bfa; --amber:#f5c86e; --muted:#9a93b8; }
+  * { box-sizing: border-box; }
+  body { background:var(--bg); color:var(--txt);
+         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         max-width: 920px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  h1 { color: var(--lav); font-size: 1.6rem; }
+  h1 .sub { display:block; font-size:.85rem; color:var(--muted); font-weight:normal; margin-top:.4rem; }
+  h2 { color: var(--amber); font-size: 1.05rem; margin-top: 1.8rem; }
+  textarea { width:100%; height:230px; background:var(--card); color:var(--txt);
+             border:1px solid var(--line); border-radius:10px; padding:.9rem; font:inherit; resize:vertical; }
+  textarea:focus { outline:none; border-color:var(--lav); }
+  .controls { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; margin:1rem 0; }
+  select { background:var(--card); color:var(--txt); border:1px solid var(--line);
+           border-radius:8px; padding:.55rem .8rem; font:inherit; }
+  label.chk { display:flex; align-items:center; gap:.35rem; color:var(--muted); font-size:.85rem; }
+  button.go { background:var(--lav); color:var(--bg); border:none; border-radius:10px;
+              padding:.7rem 1.6rem; font:inherit; font-weight:bold; cursor:pointer; font-size:1rem; }
+  button.go:hover { background:#c4b5fd; }
+  button.dl { background:transparent; color:var(--lav); border:1px solid var(--lav);
+              border-radius:10px; padding:.55rem 1.1rem; font:inherit; cursor:pointer; margin-top:.8rem; }
+  button.dl:hover { background:var(--lav); color:var(--bg); }
+  pre { background:var(--card); border:1px solid var(--line); border-radius:10px;
+        padding:1.1rem; overflow:auto; white-space:pre-wrap; word-break:break-word;
+        font-size:.85rem; line-height:1.55; }
+  .ok { color:#7ee787; } .warn { color:var(--amber); } .err { color:#ff7b72; }
+  .hint { color:var(--muted); font-size:.82rem; margin-top:1.6rem; }
+  .hint a { color:var(--lav); }
+  .tabs { display:flex; gap:.5rem; margin-bottom:.6rem; }
+  .tabs button { background:var(--card); color:var(--muted); border:1px solid var(--line);
+                 border-radius:8px; padding:.4rem .9rem; font:inherit; font-size:.82rem; cursor:pointer; }
+  .tabs button.active { color:var(--bg); background:var(--lav); border-color:var(--lav); font-weight:bold; }
+  footer { margin-top:3rem; color:var(--muted); font-size:.78rem; text-align:center; }
+</style>
+</head>
+<body>
+
+<h1>🤖 AI Gherkin Generator
+  <span class="sub">Requirement in → test cases out. Runs 100% in your browser.</span>
+</h1>
+
+<textarea id="story" placeholder="Paste your user story here..."># User login
+
+As a registered user, I want to log in with my email and password,
+so that I can access my account securely.
+
+Acceptance Criteria:
+- When the user submits valid credentials, then they are taken to the dashboard
+- An error is shown for unregistered email addresses (admin, user, guest)
+</textarea>
+
+<div class="controls">
+  <div class="tabs" id="fmtTabs">
+    <button data-fmt="gherkin" class="active">Gherkin</button>
+    <button data-fmt="json">JSON</button>
+    <button data-fmt="markdown">Markdown</button>
+  </div>
+  <label class="chk"><input type="checkbox" id="wantReport" checked> coverage</label>
+  <label class="chk"><input type="checkbox" id="wantLint" checked> lint</label>
+  <button class="go" id="go">Generate ✨</button>
+</div>
+
+<div id="result" style="display:none">
+  <h2>Output</h2>
+  <pre id="output"></pre>
+  <button class="dl" id="dl">⬇ Download file</button>
+  <div id="reportWrap"><h2>Coverage</h2><pre id="report"></pre></div>
+  <div id="lintWrap"><h2>Lint</h2><pre id="lint"></pre></div>
+</div>
+
+<p class="hint">This demo runs the offline rule engine in your browser — no data leaves this page.
+The full project (Azure OpenAI engine, CLI, batch mode) is on
+<a href="https://github.com/dharshuadhi/ai-gherkin-generator">GitHub</a>.</p>
+
+<footer>Built by Dharshini Adimoolam · MIT License</footer>
+
+<script src="engine.js"></script>
+<script>
+  let fmt = "gherkin", lastOut = "", lastExt = "feature";
+  const $ = id => document.getElementById(id);
+
+  document.querySelectorAll("#fmtTabs button").forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll("#fmtTabs button").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      fmt = b.dataset.fmt;
+    };
+  });
+
+  $("go").onclick = () => {
+    const story = $("story").value;
+    if (!story.trim()) { alert("Paste a requirement first."); return; }
+    const { out, feature } = generateFromText(story, fmt);
+    lastOut = out;
+    lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
+    $("output").textContent = out;
+
+    if ($("wantReport").checked) {
+      const c = analyzeCoverage(feature);
+      let rep = `Scenarios: ${c.total} (${c.positive} positive, ${c.negative} negative, ${c.outlines} outlines)\n`;
+      rep += c.warnings.length ? c.warnings.map(w => "⚠ " + w).join("\n") : "✓ solid coverage";
+      $("report").textContent = rep;
+      $("report").className = c.warnings.length ? "warn" : "ok";
+      $("reportWrap").style.display = "";
+    } else $("reportWrap").style.display = "none";
+
+    if ($("wantLint").checked) {
+      const issues = lintGherkin(out);
+      $("lint").textContent = issues.length ? issues.map(i => "✗ " + i).join("\n") : "✓ clean";
+      $("lint").className = issues.length ? "err" : "ok";
+      $("lintWrap").style.display = "";
+    } else $("lintWrap").style.display = "none";
+
+    $("result").style.display = "";
+    $("result").scrollIntoView({ behavior: "smooth" });
+  };
+
+  $("dl").onclick = () => {
+    const blob = new Blob([lastOut], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "generated." + lastExt;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+</script>
+</body>
+</html>
