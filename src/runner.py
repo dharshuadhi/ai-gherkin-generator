@@ -30,6 +30,17 @@ class ScenarioReport:
     skipped: str = ""
 
 
+def _reset_target(target):
+    """Best-effort: ask the target app to clear test-run state (lockouts, etc.)."""
+    try:
+        import urllib.request
+        req = urllib.request.Request(target["base_url"] + "/__reset", data=b"",
+                                     method="POST")
+        urllib.request.urlopen(req, timeout=5)
+    except Exception:  # noqa: BLE001 - reset hook is optional
+        pass
+
+
 def _run_action(page, expect, a: "Action", base_url: str):
     if a.type == "goto":
         url = a.url if a.url.startswith("http") else base_url + a.url
@@ -52,6 +63,7 @@ def run_compiled(compiled, target, screenshot_dir="screenshots", headless=True) 
     """Execute compiled scenarios headlessly. Returns [ScenarioReport]."""
     from playwright.sync_api import expect, sync_playwright
 
+    _reset_target(target)  # isolate runs: clear server-side state like lockout counters
     os.makedirs(screenshot_dir, exist_ok=True)
     reports = []
     with sync_playwright() as pw:

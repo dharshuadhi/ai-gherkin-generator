@@ -92,5 +92,12 @@ def reset():
     return render_template_string(RESET, sent=sent)
 
 
+@app.route("/__reset", methods=["POST"])
+def reset_demo():
+    """Test hook: clear lockout counters between runs."""
+    ATTEMPTS.clear()
+    return {"ok": True}
+
+
 if __name__ == "__main__":
     app.run(port=5050)

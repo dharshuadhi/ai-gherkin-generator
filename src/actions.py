@@ -45,6 +45,32 @@ DEMO_TARGET = {
         "welcome": "#welcome", "reset_sent": "#sent",
     },
     "pages": {"login": "/", "dashboard": "/dashboard", "reset": "/reset"},
+    # XPath locators + CONSTANT names for Page Object generation (src/pom.py).
+    "xpath": {
+        "email": "//input[@id='email']",
+        "password": "//input[@id='password']",
+        "login_button": "//button[@id='login-btn']",
+        "logout_link": "//a[@id='logout-link']",
+        "reset_link": "//a[@id='reset-link']",
+        "reset_email": "//input[@id='reset-email']",
+        "reset_button": "//button[@id='reset-btn']",
+        "error": "//p[@id='error']",
+        "welcome": "//h1[@id='welcome']",
+        "reset_sent": "//p[@id='sent']",
+    },
+    "const": {
+        "email": "EMAIL_INPUT", "password": "PASSWORD_INPUT",
+        "login_button": "LOGIN_BUTTON", "logout_link": "LOGOUT_LINK",
+        "reset_link": "RESET_LINK", "reset_email": "RESET_EMAIL_INPUT",
+        "reset_button": "RESET_BUTTON", "error": "ERROR_MESSAGE",
+        "welcome": "WELCOME_HEADING", "reset_sent": "RESET_CONFIRMATION",
+    },
+    # Page Object layout: class name -> url path + element keys it owns.
+    "page_objects": {
+        "LoginPage": {"path": "/", "elements": ["email", "password", "login_button", "reset_link", "error"]},
+        "ResetPage": {"path": "/reset", "elements": ["reset_email", "reset_button", "reset_sent"]},
+        "DashboardPage": {"path": "/dashboard", "elements": ["welcome", "logout_link"]},
+    },
 }
 
 

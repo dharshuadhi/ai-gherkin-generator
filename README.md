@@ -83,7 +83,46 @@ Notes from real execution:
 # Emit the suite as a standalone runnable Playwright module instead
 python -m src.cli -i examples/login_story.md --codegen test_login.py
 pytest test_login.py
+
+# Generate a full Page Object Model suite: page classes with XPath
+# locators + thin tests (the structure real SDET teams maintain)
+python -m src.cli -i examples/login_story.md --pom pom_suite/
+pytest pom_suite/ -v
 ```
+
+`--pom` writes:
+
+```
+pom_suite/
+  conftest.py              # browser/page fixtures + test-isolation hook
+  pages/
+    login_page.py          # LoginPage: XPath constants + login(), is_error_visible(), ...
+    dashboard_page.py      # DashboardPage: is_loaded(), logout(), ...
+  test_user_login.py       # thin tests: pages + assertions only
+```
+
+```python
+class LoginPage:
+    URL_PATH = "/"
+
+    EMAIL_INPUT = "//input[@id='email']"
+    PASSWORD_INPUT = "//input[@id='password']"
+    LOGIN_BUTTON = "//button[@id='login-btn']"
+    ERROR_MESSAGE = "//p[@id='error']"
+
+    def __init__(self, page: Page, base_url: str): ...
+
+    def login(self, email: str, password: str) -> None:
+        self.page.locator(self.EMAIL_INPUT).fill(email)
+        self.page.locator(self.PASSWORD_INPUT).fill(password)
+        self.page.locator(self.LOGIN_BUTTON).click()
+
+    def is_error_visible(self) -> bool: ...
+```
+
+Locators are **XPath** class constants (no CSS leaking into tests); interactions live
+in named methods; generated tests only orchestrate pages and assert outcomes.
+The web demo has a **Page Objects** tab showing the same output live.
 
 Point it at your own app by adding its selectors and test data to the
 target config in `src/actions.py` (see `DEMO_TARGET`).

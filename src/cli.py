@@ -73,7 +73,7 @@ def _post_process(text: str, feature: object | None, args, story: str = "") -> N
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(generate_stubs(feature, (args.output or "generated.feature")))
         print(f"Wrote {path} [pytest-bdd stubs]", file=sys.stderr)
-    if (args.execute or args.codegen) and feature is not None:
+    if (args.execute or args.codegen or args.pom) and feature is not None:
         from src.actions import DEMO_TARGET, compile_feature
         from src.codegen import generate_playwright
         target = DEMO_TARGET  # --target demo is the bundled login app
@@ -85,6 +85,12 @@ def _post_process(text: str, feature: object | None, args, story: str = "") -> N
             with open(args.codegen, "w", encoding="utf-8") as fh:
                 fh.write(generate_playwright(compiled, target, feature.title))
             print(f"Wrote {args.codegen} [runnable Playwright module]", file=sys.stderr)
+        if args.pom:
+            from src.pom import write_pom_suite
+            written = write_pom_suite(compiled, target, feature.title, args.pom)
+            print(f"Wrote {len(written)} files -> {args.pom}/ [Page Object suite]", file=sys.stderr)
+            for w in written:
+                print(f"  {w}", file=sys.stderr)
         if args.execute:
             from src.runner import render_run_report, run_compiled
             try:
@@ -169,6 +175,8 @@ def main() -> None:
                         help="Compile to browser actions and run headless with Playwright")
     parser.add_argument("--codegen", metavar="FILE",
                         help="Write a standalone runnable Playwright test module")
+    parser.add_argument("--pom", metavar="DIR",
+                        help="Generate a Page Object Model suite (XPath locators + page classes) into DIR")
     parser.add_argument("--target", default="demo",
                         help="Execution target app config (default: demo login app)")
     args = parser.parse_args()

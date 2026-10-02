@@ -154,6 +154,7 @@ Acceptance Criteria:
           <button data-fmt="gherkin" class="active">Gherkin</button>
           <button data-fmt="json">JSON</button>
           <button data-fmt="markdown">Markdown</button>
+          <button data-fmt="pom">Page Objects</button>
         </div>
         <label class="chk"><input type="checkbox" id="wantQuality" checked> quality</label>
         <label class="chk"><input type="checkbox" id="wantReport" checked> coverage</label>
@@ -192,6 +193,7 @@ Acceptance Criteria:
 
 <script src="engine.js"></script>
 <script src="quality.js"></script>
+<script src="pom.js"></script>
 <script>
   let fmt = "gherkin", lastOut = "", lastExt = "feature";
   const $ = id => document.getElementById(id);
@@ -278,9 +280,18 @@ Acceptance Criteria:
 
   function doGenerate() {
     const story = $("story").value;
-    const { out, feature } = generateFromText(story, fmt);
-    lastOut = out;
-    lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
+    const isPOM = fmt === "pom";
+    const { out, feature } = generateFromText(story, "gherkin");
+    let pomSummary = null;
+    if (isPOM) {
+      const r = generatePOMPreview(feature);
+      lastOut = r.code; lastExt = "py";
+      pomSummary = r;
+    } else {
+      const g = generateFromText(story, fmt);
+      lastOut = g.out;
+      lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
+    }
     let h = "";
 
     let score = null;
@@ -290,23 +301,29 @@ Acceptance Criteria:
       h += qualityCard(q);
       setStep(1);
     }
-    h += `<h2 style="margin-top:1.2rem">📄 Generated (${fmt})</h2><pre class="out"></pre>`;
-    h += `<div class="kv">`;
-    if ($("wantReport").checked) {
+    const fmtLabel = isPOM ? "Page Objects (Python)" : fmt;
+    h += `<h2 style="margin-top:1.2rem">📄 Generated (${fmtLabel})</h2>`;
+    if (isPOM && pomSummary) {
+      h += `<div class="kv"><span class="pill ok">${pomSummary.pages} page classes</span>`
+         + `<span class="pill ok">${pomSummary.tests} tests</span>`
+         + `<span class="pill warn">XPath locators</span></div>`;
+    }
+    h += `<pre class="out"></pre><div class="kv">`;
+    if (!isPOM && $("wantReport").checked) {
       const c = analyzeCoverage(feature);
       h += `<span class="pill ok">${c.total} scenarios</span>
             <span class="pill ${c.negative ? "warn" : "ok"}">${c.negative} negative</span>
             <span class="pill ${c.outlines ? "ok" : "warn"}">${c.outlines} outlines</span>`;
       if (c.warnings.length) h += `<span class="pill warn">⚠ ${c.warnings.length} coverage note${c.warnings.length === 1 ? "" : "s"}</span>`;
     }
-    if ($("wantLint").checked) {
-      const issues = lintGherkin(out);
+    if (!isPOM && $("wantLint").checked) {
+      const issues = lintGherkin(lastOut);
       h += issues.length ? `<span class="pill err">✗ ${issues.length} lint issue${issues.length === 1 ? "" : "s"}</span>`
                          : `<span class="pill ok">✓ lint clean</span>`;
     }
     h += `</div><button class="dl" id="dl">⬇ Download .${lastExt}</button>`;
     $("result").innerHTML = h;
-    $("result").querySelector("pre.out").textContent = out;
+    $("result").querySelector("pre.out").textContent = lastOut;
     $("dl").onclick = () => {
       const blob = new Blob([lastOut], { type: "text/plain" });
       const a = document.createElement("a");
@@ -317,7 +334,7 @@ Acceptance Criteria:
       setStep(3);
     };
     setStep(2);
-    return { scenarios: feature.scenarios.length, score };
+    return { scenarios: isPOM && pomSummary ? pomSummary.tests : feature.scenarios.length, score };
   }
 
   let busy = false;
