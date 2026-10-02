@@ -3,238 +3,243 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Gherkin Alchemist — Requirements → Golden Tests</title>
+<title>gherkin.compile() — requirement → test specification</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=IM+Fell+English:ital@0;1&display=swap');
   :root{
-    --night:#0d0a1f; --night2:#161130; --parchment:#f4e8c9; --parchment2:#e9d9ae;
-    --gold:#e8b64c; --gold-d:#b9862f; --violet:#7c5cff; --violet-d:#4a3699;
-    --brew:#39d0a5; --brew-d:#1d8a68; --blood:#e2574c;
-    --ink:#2a2140; --muted:#8a7fb0;
+    --bg:#0b0e17; --bg2:#0e1220; --panel:#111624; --panel2:#0d1120;
+    --line:#1e2742; --line2:#2a3554;
+    --blue:#4d9fff; --cyan:#38e1c6; --violet:#a78bfa; --amber:#f5b544;
+    --green:#3ddc84; --red:#ff5f6b; --pink:#ff6b9d;
+    --ink:#dbe4f5; --mut:#7b88a8; --dim:#4a5578;
   }
   *{box-sizing:border-box}
   body{
-    margin:0; color:var(--parchment);
-    font-family:Georgia,'Times New Roman',serif;
-    background:
-      radial-gradient(circle at 15% 10%, rgba(124,92,255,.18) 0 120px, transparent 121px),
-      radial-gradient(circle at 85% 20%, rgba(232,182,76,.12) 0 90px, transparent 91px),
-      radial-gradient(circle at 70% 90%, rgba(57,208,165,.08) 0 140px, transparent 141px),
-      linear-gradient(180deg, var(--night) 0%, var(--night2) 100%);
-    background-attachment:fixed; min-height:100vh;
-    -webkit-font-smoothing:antialiased;
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:ui-monospace,'Cascadia Code','JetBrains Mono',Menlo,Consolas,monospace;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
   }
-  .wrap{max-width:1100px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
+  ::selection{background:rgba(77,159,255,.3)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 18px 60px}
 
-  /* ============ SPELLBOOK TITLE ============ */
-  .grimoire{text-align:center;margin:1rem 0 2rem;position:relative}
-  .grimoire h1{
-    font-family:'Cinzel',serif;font-weight:900;
-    font-size:clamp(2rem,5.5vw,3.4rem);margin:0;letter-spacing:.04em;
-    background:linear-gradient(180deg,#ffe9a8,#e8b64c 60%,#b9862f);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 4px 24px rgba(232,182,76,.25);
+  /* ===== top bar ===== */
+  .topbar{
+    display:flex;align-items:center;gap:14px;padding:14px 0;
+    border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,14,23,.92);
+    backdrop-filter:blur(8px);z-index:50;
   }
-  .grimoire p{color:var(--muted);font-style:italic;margin:.5rem 0 0;font-size:1.05rem}
-  .grimoire p em{color:var(--gold)}
-  .stars{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-  .star{position:absolute;color:var(--gold);animation:twinkle 2.8s ease-in-out infinite;opacity:.7}
-  @keyframes twinkle{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:.9;transform:scale(1.15)}}
+  .logo{font-weight:700;font-size:16px;letter-spacing:-.5px}
+  .logo .fn{color:var(--cyan)} .logo .par{color:var(--dim)}
+  .logo .str{color:var(--amber)}
+  .spacer{flex:1}
+  .badge{
+    font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 12px;border-radius:6px;
+    border:1px solid var(--line2);color:var(--mut);text-decoration:none;display:inline-flex;align-items:center;gap:7px;
+  }
+  .badge.live{border-color:#14532d;color:var(--green);background:rgba(61,220,132,.07)}
+  .badge.live i{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{opacity:.35}}
 
-  /* ============ LAB BENCH ============ */
-  .bench{
-    display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-bottom:1.6rem;
-  }
-  @media(max-width:820px){.bench{grid-template-columns:1fr}}
-  .panel{
-    background:linear-gradient(180deg,rgba(30,24,58,.92),rgba(20,15,42,.94));
-    border:1px solid #3a2f6e;border-radius:18px;padding:1.4rem;
-    box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(232,182,76,.15);
-    position:relative;
-  }
-  .panel h2{
-    font-family:'Cinzel',serif;font-size:1.05rem;letter-spacing:.12em;color:var(--gold);
-    margin:0 0 .9rem;display:flex;align-items:center;gap:.5rem;
-  }
-  .panel h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#3a2f6e,transparent)}
+  /* ===== hero strip ===== */
+  .hero{padding:34px 0 8px}
+  .hero h1{font-size:clamp(24px,4vw,38px);margin:0;letter-spacing:-1px;font-weight:700}
+  .hero h1 .c{color:var(--cyan)} .hero h1 .v{color:var(--violet)}
+  .hero p{color:var(--mut);font-size:14px;max-width:640px;line-height:1.7;margin:10px 0 0}
+  .hero p code{color:var(--cyan);background:var(--panel);padding:2px 7px;border-radius:5px;border:1px solid var(--line)}
 
-  textarea#story{
-    width:100%;min-height:190px;resize:vertical;
-    background:#0a0718;color:var(--parchment);
-    border:1px solid #3a2f6e;border-radius:12px;padding:.9rem;
-    font-family:Georgia,serif;font-size:.95rem;line-height:1.6;
-  }
-  textarea#story:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,92,255,.25)}
-  textarea#story::placeholder{color:#5a4f8a;font-style:italic}
-
-  /* format selector as potion shelf */
-  .shelf{display:flex;gap:.5rem;flex-wrap:wrap;margin:.9rem 0}
-  .potion-tab{
-    border:1px solid #3a2f6e;background:#141026;color:var(--muted);
-    border-radius:999px;padding:.45rem 1rem;font-size:.85rem;cursor:pointer;
-    font-family:Georgia,serif;transition:.18s;
-  }
-  .potion-tab:hover{border-color:var(--violet);color:var(--parchment)}
-  .potion-tab.active{background:linear-gradient(180deg,#2c2358,#1c1640);border-color:var(--gold);color:var(--gold);box-shadow:0 0 14px rgba(232,182,76,.25)}
-
-  .toggles{display:flex;gap:1rem;flex-wrap:wrap;margin:.4rem 0 .2rem;font-size:.9rem;color:var(--muted)}
-  .toggles label{display:flex;align-items:center;gap:.45rem;cursor:pointer}
-  .toggles input{accent-color:var(--violet);width:17px;height:17px;cursor:pointer}
-
-  /* ============ CAULDRON ============ */
-  .cauldron-zone{position:relative;text-align:center;padding:1rem 0 .4rem;min-height:340px}
-  .cauldron{font-size:120px;position:relative;display:inline-block;filter:drop-shadow(0 14px 24px rgba(0,0,0,.6))}
-  .cauldron.brewing{animation:shake .5s ease-in-out infinite}
-  @keyframes shake{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
-  .bubbles{position:absolute;left:50%;bottom:118px;width:120px;height:90px;transform:translateX(-50%);pointer-events:none;overflow:visible}
-  .bubble{position:absolute;bottom:0;border-radius:50%;
-    background:radial-gradient(circle at 35% 35%, rgba(190,255,230,.95), rgba(57,208,165,.55));
-    animation:rise linear infinite;opacity:0}
-  .brewing .bubble{opacity:1}
-  @keyframes rise{0%{transform:translateY(0) scale(.5);opacity:0}15%{opacity:.95}100%{transform:translateY(-85px) scale(1.15);opacity:0}}
-  .brew-btn{
-    font-family:'Cinzel',serif;font-weight:700;font-size:1.15rem;letter-spacing:.06em;
-    background:linear-gradient(180deg,#f4cd6e,#d99f2e);color:#3a2404;
-    border:none;border-radius:14px;padding:.95rem 3rem;cursor:pointer;margin-top:1rem;
-    box-shadow:0 6px 0 #8a5f16, 0 12px 26px rgba(232,182,76,.35);transition:.15s;
-  }
-  .brew-btn:hover{filter:brightness(1.06)}
-  .brew-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f16}
-  .brew-btn:disabled{opacity:.55;cursor:wait}
-
-  /* alchemist */
-  #alchemist{position:absolute;font-size:56px;left:6%;bottom:24px;transition:left 1s ease-in-out;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
-  #alchemist .speech{
-    position:absolute;bottom:110%;left:50%;transform:translateX(-50%);
-    background:var(--parchment);color:var(--ink);font-size:.82rem;font-style:italic;
-    padding:.5rem .8rem;border-radius:12px;white-space:nowrap;opacity:0;transition:.25s;
-    box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;max-width:280px;white-space:normal;
-  }
-  #alchemist.talking .speech{opacity:1}
-  #alchemist.stirring{animation:stir .6s ease-in-out infinite}
-  @keyframes stir{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
-
-  /* brewing stages */
-  .stages{display:flex;justify-content:center;gap:.4rem;margin:1.1rem 0 .2rem;flex-wrap:wrap}
+  /* ===== pipeline ===== */
+  .pipe{display:flex;align-items:stretch;gap:0;margin:26px 0;overflow-x:auto;padding-bottom:4px}
   .stage{
-    font-size:.78rem;letter-spacing:.08em;color:var(--muted);
-    border:1px solid #2c2454;padding:.4rem .8rem;border-radius:999px;transition:.3s;
-    font-family:'Cinzel',serif;
+    flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);
+    padding:14px 12px;position:relative;transition:.3s;
   }
-  .stage.lit{color:#0d0a1f;background:linear-gradient(180deg,#9d86ff,#7c5cff);border-color:#9d86ff;box-shadow:0 0 16px rgba(124,92,255,.5)}
-  .stage.done{color:var(--gold);border-color:var(--gold)}
+  .stage:first-child{border-radius:12px 0 0 12px}
+  .stage:last-child{border-radius:0 12px 12px 0}
+  .stage + .stage{border-left:none}
+  .stage .n{font-size:10px;color:var(--dim);letter-spacing:2px}
+  .stage .t{font-size:14px;font-weight:700;margin:4px 0 2px}
+  .stage .d{font-size:11px;color:var(--mut);line-height:1.5}
+  .stage .st{position:absolute;top:12px;right:12px;font-size:13px}
+  .stage.run{border-color:var(--blue);box-shadow:inset 0 0 24px rgba(77,159,255,.12)}
+  .stage.run .st{color:var(--blue);animation:spin 1s linear infinite}
+  .stage.done{border-color:#14532d}
+  .stage.done .st{color:var(--green)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .pipe-arrow{align-self:center;color:var(--dim);padding:0 6px;font-size:18px;flex:0 0 auto}
 
-  /* ============ OUTPUT ============ */
-  #result{margin-top:.4rem}
-  .elixir{
-    background:linear-gradient(180deg,#fffdf4,#f7ecd2);
-    color:var(--ink);border-radius:16px;padding:1.2rem;
-    border:3px solid var(--gold);box-shadow:0 10px 30px rgba(0,0,0,.4);
-    position:relative;
-  }
-  .elixir::before{content:"🧪";position:absolute;top:-22px;left:20px;font-size:34px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
-  .elixir h3{font-family:'Cinzel',serif;color:#7a5a12;margin:.4rem 0 .8rem;font-size:1rem;letter-spacing:.08em}
-  .elixir pre{
-    background:#141026;color:#c9f5e6;border-radius:10px;padding:1rem;
-    font-family:ui-monospace,Consolas,monospace;font-size:.83rem;line-height:1.65;
-    max-height:380px;overflow:auto;white-space:pre-wrap;margin:0;
-  }
-  .kv{display:flex;gap:.5rem;flex-wrap:wrap;margin:.8rem 0}
-  .pill{font-size:.75rem;font-weight:700;padding:.3rem .75rem;border-radius:999px;letter-spacing:.03em}
-  .pill.ok{background:#dff5e6;color:#1d7a4c}.pill.warn{background:#fdf0d3;color:#9a6b12}.pill.err{background:#fbdddd;color:#b93a30}
-  .dl{
-    display:inline-block;margin-top:.6rem;background:linear-gradient(180deg,#39d0a5,#1d8a68);color:#04231a;
-    border:none;border-radius:10px;padding:.7rem 1.6rem;font-weight:700;cursor:pointer;font-size:.95rem;
-    box-shadow:0 4px 0 #0f5c42;font-family:Georgia,serif;
-  }
-  .dl:active{transform:translateY(3px);box-shadow:none}
+  /* ===== main grid ===== */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
 
-  /* quality as purity seal */
-  #quality{margin-top:1rem}
-  .seal{
-    background:linear-gradient(180deg,rgba(30,24,58,.92),rgba(20,15,42,.94));
-    border:1px solid #3a2f6e;border-radius:16px;padding:1.2rem;position:relative;overflow:hidden;
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .p-head{
+    display:flex;align-items:center;gap:10px;padding:11px 16px;
+    border-bottom:1px solid var(--line);background:var(--panel2);font-size:12px;
   }
-  .seal .score{font-family:'Cinzel',serif;font-size:2.6rem;font-weight:900;color:var(--gold)}
-  .seal .bar{height:10px;background:#141026;border-radius:99px;margin:.7rem 0;overflow:hidden}
-  .seal .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--brew));transition:width 1s}
-  .finding{font-size:.85rem;padding:.45rem 0;border-bottom:1px dashed #2c2454;color:var(--parchment)}
-  .finding .fix{display:block;color:var(--brew);font-size:.8rem}
-  .finding.critical{color:#ffb3ab}.finding.warning{color:#ffe1a1}
-  #stamp{
-    position:absolute;top:14px;right:16px;font-family:'Cinzel',serif;font-weight:900;
-    font-size:1rem;letter-spacing:.1em;color:var(--brew);border:3px solid var(--brew);
-    border-radius:10px;padding:.35rem .8rem;transform:rotate(10deg) scale(3);opacity:0;
+  .p-head .dots{display:flex;gap:6px}
+  .p-head .dots i{width:11px;height:11px;border-radius:50%}
+  .p-head .fname{color:var(--mut)}
+  .p-head .fname b{color:var(--ink);font-weight:600}
+  .p-head .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+  /* editor */
+  .ed{display:flex;min-height:300px}
+  .ln{
+    padding:14px 10px 14px 16px;text-align:right;color:var(--dim);font-size:13px;line-height:1.7;
+    border-right:1px solid var(--line);user-select:none;min-width:44px;
   }
-  #stamp.slam{animation:slam .5s forwards}
-  @keyframes slam{to{transform:rotate(-8deg) scale(1);opacity:.92}}
+  textarea#story{
+    flex:1;background:transparent;border:none;outline:none;resize:vertical;
+    color:var(--ink);font:inherit;font-size:13px;line-height:1.7;padding:14px;min-height:300px;
+  }
+  textarea#story::placeholder{color:var(--dim)}
 
-  .empty{text-align:center;color:var(--muted);font-style:italic;padding:1.4rem}
-  .empty .big{font-size:2.4rem;display:block;margin-bottom:.4rem}
+  .controls{padding:14px 16px;border-top:1px solid var(--line);background:var(--panel2)}
+  .fmt-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .fmt{
+    font:inherit;font-size:12px;padding:8px 14px;border-radius:8px;cursor:pointer;
+    background:var(--bg2);border:1px solid var(--line2);color:var(--mut);transition:.15s;
+  }
+  .fmt:hover{color:var(--ink);border-color:var(--blue)}
+  .fmt.active{background:rgba(77,159,255,.14);border-color:var(--blue);color:var(--blue)}
+  .opt-row{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-bottom:14px}
+  .opt-row label{display:flex;align-items:center;gap:7px;cursor:pointer}
+  .opt-row input{accent-color:var(--blue);width:15px;height:15px}
+  .compile-btn{
+    width:100%;font:inherit;font-weight:700;font-size:15px;letter-spacing:.5px;
+    padding:14px;border:none;border-radius:10px;cursor:pointer;
+    background:linear-gradient(135deg,#2f7de1,#4d9fff);color:#fff;
+    box-shadow:0 4px 20px rgba(77,159,255,.35);transition:.15s;
+  }
+  .compile-btn:hover{filter:brightness(1.1)}
+  .compile-btn:active{transform:translateY(2px)}
+  .compile-btn:disabled{opacity:.5;cursor:wait}
 
-  footer{text-align:center;color:var(--muted);font-size:.85rem;padding:2rem 0 1rem;font-style:italic}
-  footer a{color:var(--gold)}
-  .reveal{opacity:0;transform:translateY(22px);transition:.6s}
+  /* terminal */
+  .term{
+    background:#070a13;border-top:1px solid var(--line);padding:14px 16px;
+    font-size:12px;line-height:2;min-height:150px;max-height:210px;overflow-y:auto;
+  }
+  .term .t{color:var(--dim)} .term .ok{color:var(--green)} .term .inf{color:var(--blue)}
+  .term .warn{color:var(--amber)} .term .err{color:var(--red)} .term .hl{color:var(--cyan)}
+
+  /* output */
+  .tabs{display:flex;gap:2px;padding:10px 12px 0;background:var(--panel2);border-bottom:1px solid var(--line)}
+  .tab{
+    font:inherit;font-size:12px;padding:9px 16px;border:none;background:transparent;color:var(--mut);
+    cursor:pointer;border-bottom:2px solid transparent;
+  }
+  .tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+  .out-wrap{position:relative}
+  pre.out{
+    margin:0;padding:16px;font-size:12.5px;line-height:1.75;max-height:440px;overflow:auto;
+    white-space:pre-wrap;word-break:break-word;
+  }
+  .copy{
+    position:absolute;top:10px;right:12px;font:inherit;font-size:11px;padding:6px 12px;border-radius:7px;
+    background:var(--bg2);border:1px solid var(--line2);color:var(--mut);cursor:pointer;
+  }
+  .copy:hover{color:var(--cyan);border-color:var(--cyan)}
+  .dl-row{padding:12px 16px;border-top:1px solid var(--line);background:var(--panel2);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .dl-btn{
+    font:inherit;font-size:13px;font-weight:700;padding:10px 20px;border-radius:9px;cursor:pointer;
+    background:rgba(61,220,132,.12);border:1px solid #14532d;color:var(--green);
+  }
+  .dl-btn:hover{background:rgba(61,220,132,.22)}
+  .meta{font-size:11px;color:var(--dim)}
+
+  /* quality gates */
+  .gates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  @media(max-width:700px){.gates{grid-template-columns:1fr}}
+  .gate{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .gate h4{margin:0 0 8px;font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:700}
+  .gate .big{font-size:30px;font-weight:700}
+  .gate .bar{height:7px;background:var(--bg2);border-radius:99px;margin:10px 0;overflow:hidden}
+  .gate .bar i{display:block;height:100%;border-radius:99px;transition:width .8s}
+  .gate ul{margin:8px 0 0;padding:0;list-style:none;font-size:11.5px;line-height:1.9;color:var(--mut)}
+  .gate ul b{font-weight:700}
+  .pass{color:var(--green)} .fail{color:var(--red)} .warn2{color:var(--amber)}
+
+  .empty{padding:50px 20px;text-align:center;color:var(--dim);font-size:13px}
+  .empty .big{font-size:34px;display:block;margin-bottom:10px;opacity:.5}
+
+  footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  footer a{color:var(--blue);text-decoration:none}
+  .reveal{opacity:0;transform:translateY(18px);transition:.55s}
   .reveal.in{opacity:1;transform:none}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="grimoire reveal in">
-    <div class="stars" id="stars"></div>
-    <h1>⚗ The Gherkin Alchemist</h1>
-    <p>Toss in raw requirements — <em>out comes golden Gherkin.</em> No toads were harmed.</p>
+<div class="topbar">
+  <div class="wrap" style="display:flex;align-items:center;gap:14px;padding-bottom:0;width:100%">
+    <div class="logo"><span class="fn">gherkin</span><span class="par">.</span><span class="fn">compile</span><span class="par">(</span><span class="str">"requirement.txt"</span><span class="par">)</span></div>
+    <div class="spacer"></div>
+    <span class="badge live"><i></i>ENGINE v4 · ONLINE</span>
+    <a class="badge" href="https://github.com/dharshuadhi/ai-gherkin-generator" target="_blank" rel="noopener">↗ src</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hero reveal in">
+    <h1>requirement <span class="c">→</span> <span class="v">specification</span></h1>
+    <p>A zero-dependency rule engine that lexes plain-English requirements and emits structured <code>.feature</code> files — plus JSON, Markdown, pytest-bdd stubs and Page Objects. 32 unit tests. Works fully offline.</p>
   </div>
 
-  <div class="bench">
-    <div class="panel reveal in">
-      <h2>📜 Raw Ingredients</h2>
-      <textarea id="story" placeholder="Paste your requirement here, mortal…
+  <!-- PIPELINE -->
+  <div class="pipe reveal in" id="pipe">
+    <div class="stage" data-s="0"><span class="st">○</span><div class="n">STAGE 01</div><div class="t">LEX</div><div class="d">Tokenize story, roles &amp; bullets</div></div><div class="pipe-arrow">→</div>
+    <div class="stage" data-s="1"><span class="st">○</span><div class="n">STAGE 02</div><div class="t">PARSE</div><div class="d">Build scenario AST</div></div><div class="pipe-arrow">→</div>
+    <div class="stage" data-s="2"><span class="st">○</span><div class="n">STAGE 03</div><div class="t">GENERATE</div><div class="d">Emit Gherkin / JSON / POM</div></div><div class="pipe-arrow">→</div>
+    <div class="stage" data-s="3"><span class="st">○</span><div class="n">STAGE 04</div><div class="t">ANALYZE</div><div class="d">Quality · lint · coverage</div></div><div class="pipe-arrow">→</div>
+    <div class="stage" data-s="4"><span class="st">○</span><div class="n">STAGE 05</div><div class="t">EMIT</div><div class="d">Artifact download</div></div>
+  </div>
 
-As a shopper, I want to add items to my cart, so that I can checkout later.
+  <div class="grid">
+    <!-- INPUT -->
+    <div class="panel reveal in">
+      <div class="p-head"><div class="dots"><i style="background:#ff5f6b"></i><i style="background:#f5b544"></i><i style="background:#3ddc84"></i></div><div class="fname"><b>requirement.txt</b> — plain text in</div></div>
+      <div class="ed">
+        <div class="ln" id="ln">1</div>
+        <textarea id="story" spellcheck="false" placeholder="As a shopper, I want to add items to my cart, so that I can checkout later.
 
 Acceptance criteria:
 - When I click add to cart then the cart badge shows 1
 - When I add two items then the total is correct"></textarea>
-      <div class="shelf" id="fmtTabs">
-        <button class="potion-tab active" data-fmt="gherkin">🧪 Gherkin</button>
-        <button class="potion-tab" data-fmt="json">🔮 JSON</button>
-        <button class="potion-tab" data-fmt="markdown">📖 Markdown</button>
-        <button class="potion-tab" data-fmt="pom">⚗️ POM (Python)</button>
       </div>
-      <div class="toggles">
-        <label><input type="checkbox" id="wantQuality" checked> 🔍 Purity inspection</label>
-        <label><input type="checkbox" id="wantLint" checked> 🧹 Lint sweep</label>
-        <label><input type="checkbox" id="wantReport" checked> 📊 Coverage chart</label>
-      </div>
-    </div>
-
-    <div class="panel reveal in">
-      <h2>🔥 The Brewing</h2>
-      <div class="cauldron-zone">
-        <div id="alchemist">🧙<span class="speech" id="bubble"></span></div>
-        <div class="cauldron" id="cauldron">🍲<div class="bubbles" id="bubbles"></div></div>
-        <div class="stages" id="stages">
-          <span class="stage">Gather</span><span class="stage">Chop</span>
-          <span class="stage">Brew</span><span class="stage">Taste</span><span class="stage">Bottle</span>
+      <div class="controls">
+        <div class="fmt-row" id="fmtTabs">
+          <button class="fmt active" data-fmt="gherkin">.feature</button>
+          <button class="fmt" data-fmt="json">.json</button>
+          <button class="fmt" data-fmt="markdown">.md</button>
+          <button class="fmt" data-fmt="pom">.py (POM)</button>
         </div>
-        <button class="brew-btn" id="brewBtn" onclick="startBrewing()">⚗ Brew it!</button>
+        <div class="opt-row">
+          <label><input type="checkbox" id="wantQuality" checked> quality gate</label>
+          <label><input type="checkbox" id="wantLint" checked> lint</label>
+          <label><input type="checkbox" id="wantReport" checked> coverage</label>
+        </div>
+        <button class="compile-btn" id="compileBtn" onclick="compile()">▶ COMPILE</button>
       </div>
+      <div class="term" id="term"><div class="t">$ awaiting input_</div></div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="panel reveal in">
+      <div class="p-head"><div class="dots"><i style="background:#ff5f6b"></i><i style="background:#f5b544"></i><i style="background:#3ddc84"></i></div><div class="fname"><b id="outName">output</b> — generated</div><div class="right"><span class="meta" id="outMeta"></span></div></div>
+      <div id="result"><div class="empty"><span class="big">▚</span>no artifact yet — hit COMPILE</div></div>
     </div>
   </div>
 
-  <div class="panel reveal in">
-    <h2>🧪 Bottled Elixir</h2>
-    <div id="result"><div class="empty"><span class="big">🍲</span>The cauldron is cold and empty.<br>Brew something above!</div></div>
+  <!-- QUALITY GATES -->
+  <div class="gates" id="gates" style="display:none">
+    <div class="gate"><h4>QUALITY SCORE</h4><div class="big" id="gScore">—</div><div class="bar"><i id="gBar"></i></div><ul id="gFind"></ul></div>
+    <div class="gate"><h4>LINT</h4><div class="big" id="lScore">—</div><ul id="lFind"></ul></div>
+    <div class="gate"><h4>COVERAGE</h4><div class="big" id="cScore">—</div><ul id="cFind"></ul></div>
   </div>
-
-  <div id="quality"></div>
 
   <footer>
-    Brewed by <a href="https://github.com/dharshuadhi">Dharshini Adimoolam</a> ·
-    <a href="https://github.com/dharshuadhi/ai-gherkin-generator">grimoire (repo)</a><br>
-    Rule-based engine · zero dependencies · works fully offline
+    <span>built by <a href="https://github.com/dharshuadhi">Dharshini Adimoolam</a></span>
+    <span><a href="https://github.com/dharshuadhi/ai-gherkin-generator">repo</a> · rule engine · 32 tests · offline-first</span>
   </footer>
 </div>
 
@@ -245,183 +250,145 @@ Acceptance criteria:
   const $ = id => document.getElementById(id);
   const wait = ms => new Promise(r => setTimeout(r, ms));
   let fmt = "gherkin", lastOut = "", lastExt = "feature";
-  const alchemist = $("alchemist"), cauldron = $("cauldron"), bubble = $("bubble");
 
-  /* twinkling stars */
-  (() => {
-    const s = $("stars");
-    for (let i = 0; i < 26; i++) {
-      const sp = document.createElement("span");
-      sp.className = "star"; sp.textContent = "✦";
-      sp.style.left = Math.random() * 100 + "%";
-      sp.style.top = Math.random() * 100 + "%";
-      sp.style.fontSize = (8 + Math.random() * 12) + "px";
-      sp.style.animationDelay = (Math.random() * 3) + "s";
-      s.appendChild(sp);
-    }
-  })();
-
-  /* bubbles */
-  (() => {
-    const b = $("bubbles");
-    for (let i = 0; i < 12; i++) {
-      const d = document.createElement("div");
-      d.className = "bubble";
-      const sz = 8 + Math.random() * 16;
-      d.style.width = d.style.height = sz + "px";
-      d.style.left = (10 + Math.random() * 100) + "px";
-      d.style.animationDuration = (1.2 + Math.random() * 1.8) + "s";
-      d.style.animationDelay = (Math.random() * 2) + "s";
-      b.appendChild(d);
-    }
-  })();
+  /* line numbers */
+  const ta = $("story"), ln = $("ln");
+  ta.addEventListener("input", () => {
+    const n = ta.value.split("\n").length;
+    ln.innerHTML = Array.from({length: n}, (_, i) => i + 1).join("<br>");
+  });
 
   /* format tabs */
-  document.querySelectorAll(".potion-tab").forEach(t => t.addEventListener("click", () => {
-    document.querySelectorAll(".potion-tab").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".fmt").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".fmt").forEach(x => x.classList.remove("active"));
     t.classList.add("active"); fmt = t.dataset.fmt;
-    say(fmt === "pom" ? "Page Objects? A ambitious vintage! ⚗️" : "A fine choice of vessel. 🧪", 1800);
   }));
 
-  function say(text, ms) {
-    bubble.textContent = text;
-    alchemist.classList.add("talking");
-    clearTimeout(say._t);
-    say._t = setTimeout(() => alchemist.classList.remove("talking"), ms || 2200);
+  /* terminal */
+  function tlog(html) {
+    const t = $("term");
+    t.insertAdjacentHTML("beforeend", "<div>" + html + "</div>");
+    t.scrollTop = t.scrollHeight;
   }
-  function setStage(i) {
-    document.querySelectorAll(".stage").forEach((s, j) => {
-      s.classList.toggle("lit", j === i);
-      s.classList.toggle("done", j < i);
-    });
+  function tclear() { $("term").innerHTML = ""; }
+
+  /* pipeline stages */
+  function stage(i, state) {
+    const el = document.querySelector(`.stage[data-s="${i}"]`);
+    el.classList.remove("run", "done");
+    el.querySelector(".st").textContent = "○";
+    if (state === "run") { el.classList.add("run"); el.querySelector(".st").textContent = "◌"; }
+    if (state === "done") { el.classList.add("done"); el.querySelector(".st").textContent = "●"; }
   }
-  function resetStages() {
-    document.querySelectorAll(".stage").forEach(s => s.classList.remove("lit", "done"));
-  }
-  function walkToCauldron() {
-    alchemist.style.left = "38%";
-    return wait(1050);
-  }
-  function goHome() {
-    alchemist.style.left = "6%";
-    alchemist.classList.remove("stirring");
+  function resetPipe() { for (let i = 0; i < 5; i++) stage(i, null); }
+
+  /* minimal gherkin syntax highlight */
+  function hl(src) {
+    return src.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/^(\s*)(Feature:|Scenario:|Scenario Outline:|Examples:|Background:)(.*)$/gm,
+        '$1<span style="color:#a78bfa;font-weight:700">$2</span>$3')
+      .replace(/^(\s*)(Given|When|Then|And|But)(\s)/gm,
+        '$1<span style="color:#4d9fff;font-weight:700">$2</span>$3')
+      .replace(/^(\s*)(#.*)$/gm, '$1<span style="color:#4a5578">$2</span>')
+      .replace(/("[^"]*")/g, '<span style="color:#f5b544">$1</span>');
   }
 
-  function qualityCard(q) {
-    let h = `<div class="seal"><div id="stamp">✓ PURE</div>
-      <div style="font-family:'Cinzel',serif;letter-spacing:.12em;font-size:.8rem;color:var(--muted)">PURITY INSPECTION</div>
-      <div class="score">${q.score}<span style="font-size:1.2rem;color:var(--muted)">/100</span></div>
-      <div class="bar"><i style="width:${q.score}%"></i></div>`;
-    q.findings.forEach(f => {
-      h += `<div class="finding ${f.severity}"><b>[${f.severity}]</b> ${f.message}<span class="fix">→ ${f.suggestion}</span></div>`;
-    });
-    if (!q.findings.length) h += `<div class="kv"><span class="pill ok">✓ flawless elixir — no impurities</span></div>`;
-    return h + `</div>`;
+  function renderGates(q, lintIssues, cov) {
+    $("gates").style.display = "grid";
+    if (q) {
+      $("gScore").innerHTML = q.score + '<span style="font-size:14px;color:var(--dim)">/100</span>';
+      $("gScore").style.color = q.score >= 70 ? "var(--green)" : q.score >= 40 ? "var(--amber)" : "var(--red)";
+      const bar = $("gBar");
+      bar.style.width = q.score + "%";
+      bar.style.background = q.score >= 70 ? "var(--green)" : q.score >= 40 ? "var(--amber)" : "var(--red)";
+      $("gFind").innerHTML = q.findings.length
+        ? q.findings.slice(0, 4).map(f => `<li><b class="${f.severity === "critical" ? "fail" : "warn2"}">[${f.severity}]</b> ${f.message}</li>`).join("")
+        : `<li><b class="pass">✓</b> no findings — clean spec</li>`;
+    } else { $("gScore").textContent = "—"; $("gFind").innerHTML = `<li>gate disabled</li>`; }
+    if (lintIssues) {
+      $("lScore").innerHTML = lintIssues.length ? `<span class="fail">${lintIssues.length} issues</span>` : `<span class="pass">✓ clean</span>`;
+      $("lFind").innerHTML = lintIssues.length
+        ? lintIssues.slice(0, 4).map(i => `<li><b class="fail">✗</b> ${i.message || i}</li>`).join("")
+        : `<li><b class="pass">✓</b> style checks passed</li>`;
+    } else { $("lScore").textContent = "—"; $("lFind").innerHTML = `<li>gate disabled</li>`; }
+    if (cov) {
+      $("cScore").innerHTML = cov.total + '<span style="font-size:14px;color:var(--dim)"> scenarios</span>';
+      $("cFind").innerHTML =
+        `<li>negative paths: <b class="${cov.negative ? "pass" : "warn2"}">${cov.negative}</b></li>` +
+        `<li>outlines: <b class="${cov.outlines ? "pass" : "warn2"}">${cov.outlines}</b></li>` +
+        (cov.warnings.length ? cov.warnings.slice(0, 2).map(w => `<li><b class="warn2">⚠</b> ${w}</li>`).join("") : `<li><b class="pass">✓</b> no coverage gaps</li>`);
+    } else { $("cScore").textContent = "—"; $("cFind").innerHTML = `<li>gate disabled</li>`; }
   }
 
-  function doGenerate() {
-    const story = $("story").value;
-    const isPOM = fmt === "pom";
-    const { feature } = generateFromText(story, "gherkin");
-    let pomSummary = null;
-    if (isPOM) {
-      const r = generatePOMPreview(feature);
-      lastOut = r.code; lastExt = "py";
-      pomSummary = r;
-    } else {
-      const g = generateFromText(story, fmt);
-      lastOut = g.out;
-      lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
-    }
-
-    let score = null;
-    if ($("wantQuality").checked) {
-      const q = analyzeQuality(parseStoryLite(story));
-      score = q.score;
-      $("quality").innerHTML = qualityCard(q);
-      requestAnimationFrame(() => $("stamp").classList.add("slam"));
-    } else {
-      $("quality").innerHTML = `<div class="empty"><span class="big">😴</span>The inspector is napping in the tower.<br>Tick 🔍 to wake him.</div>`;
-    }
-
-    const fmtLabel = isPOM ? "Page Objects (Python)" : fmt;
-    let h = `<div class="elixir"><h3>✨ FRESHLY BREWED · ${fmtLabel.toUpperCase()}</h3><pre></pre></div><div class="kv">`;
-    h += `<div class="kv"><span class="pill ok">⚗ bottled fresh</span><span class="pill warn">${fmtLabel}</span></div>`;
-    if (isPOM && pomSummary) {
-      h += `<div class="kv"><span class="pill ok">${pomSummary.pages} page classes</span>`
-         + `<span class="pill ok">${pomSummary.tests} tests</span>`
-         + `<span class="pill warn">XPath locators</span></div>`;
-    }
-    if (!isPOM && $("wantReport").checked) {
-      const c = analyzeCoverage(feature);
-      h += `<span class="pill ok">${c.total} scenarios</span>
-            <span class="pill ${c.negative ? "warn" : "ok"}">${c.negative} negative</span>
-            <span class="pill ${c.outlines ? "ok" : "warn"}">${c.outlines} outlines</span>`;
-      if (c.warnings.length) h += `<span class="pill warn">⚠ ${c.warnings.length} tasting note${c.warnings.length === 1 ? "" : "s"}</span>`;
-    }
-    if (!isPOM && $("wantLint").checked) {
-      const issues = lintGherkin(lastOut);
-      h += issues.length ? `<span class="pill err">✗ ${issues.length} impurity${issues.length === 1 ? "" : "ies"}</span>`
-                         : `<span class="pill ok">✓ crystal clear</span>`;
-    }
-    h += `</div><button class="dl" id="dl">🧪 Bottle it! Download .${lastExt}</button>`;
-    $("result").innerHTML = h;
-    $("result").querySelector("pre").textContent = lastOut;
-    $("dl").onclick = () => {
-      const blob = new Blob([lastOut], { type: "text/plain" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "generated." + lastExt;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      setStage(4);
-      say("Corked & labeled! To the cellar it goes. 🏷️", 2600);
-    };
-    return { scenarios: isPOM && pomSummary ? pomSummary.tests : feature.scenarios.length, score };
-  }
-
-  /* ---------- the big brew ---------- */
   let busy = false;
-  async function startBrewing() {
+  async function compile() {
     if (busy) return;
-    if (!$("story").value.trim()) { say("The pantry is bare! Paste a requirement first! 📜"); setStage(-1); return; }
+    const story = ta.value.trim();
+    if (!story) { tclear(); tlog('<span class="err">✗ error:</span> empty input — nothing to compile'); return; }
     busy = true;
-    const btn = $("brewBtn"); btn.disabled = true;
+    const btn = $("compileBtn"); btn.disabled = true; btn.textContent = "◌ COMPILING…";
+    tclear(); resetPipe();
     try {
-      resetStages();
-      say("Ahh, fresh ingredients! 🧙");
-      await walkToCauldron();
-      alchemist.classList.add("stirring");
-      cauldron.classList.add("brewing");
-      say("Double, double… boil and bubble! 🔥");
-      await wait(400);
-      setStage(0); say("Gathering the raw goods… 🌿"); await wait(550);
-      setStage(1); say("Chopping into scenarios… 🔪"); await wait(550);
-      setStage(2); say("Brewing in pure Gherkin… 🫧");
-      const s = doGenerate();
-      await wait(650);
-      setStage(3); say("Tasting for purity… 👅"); await wait(550);
-      cauldron.classList.remove("brewing");
-      alchemist.classList.remove("stirring");
-      setStage(4);
-      const cheers = [
-        `✨ ${s.scenarios} scenarios bottled! The coven approves.`,
-        `🧪 Behold! ${s.scenarios} sparkling scenarios, no eye of newt required.`,
-        `⚗ Another flawless transmutation! ${s.scenarios} scenarios from thin air.`
-      ];
-      say(cheers[Math.floor(Math.random() * cheers.length)], 3200);
-      goHome();
+      stage(0, "run"); tlog('<span class="t">[lex]</span> tokenizing input…');
+      await wait(450);
+      const { feature } = generateFromText(story, "gherkin");
+      tlog(`<span class="ok">✓</span> <span class="hl">${feature.scenarios.length} scenario blocks</span> <span class="t">· ${feature.title || "untitled"}</span>`);
+      stage(0, "done"); stage(1, "run"); tlog('<span class="t">[parse]</span> building AST…');
+      await wait(450);
+      stage(1, "done"); stage(2, "run"); tlog(`<span class="t">[generate]</span> emitting <span class="hl">${fmt}</span>…`);
+      await wait(450);
+
+      const isPOM = fmt === "pom";
+      let pomSummary = null;
+      if (isPOM) {
+        const r = generatePOMPreview(feature);
+        lastOut = r.code; lastExt = "py"; pomSummary = r;
+        tlog(`<span class="ok">✓</span> ${r.pages} page classes · ${r.tests} tests`);
+      } else {
+        const g = generateFromText(story, fmt);
+        lastOut = g.out;
+        lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
+        tlog(`<span class="ok">✓</span> <span class="hl">${lastOut.length} bytes</span> <span class="t">emitted</span>`);
+      }
+      stage(2, "done"); stage(3, "run"); tlog('<span class="t">[analyze]</span> running gates…');
+      await wait(450);
+
+      let q = null, lintIssues = null, cov = null;
+      if ($("wantQuality").checked && !isPOM) { q = analyzeQuality(parseStoryLite(story)); }
+      if ($("wantLint").checked && !isPOM) { lintIssues = lintGherkin(lastOut); }
+      if ($("wantReport").checked && !isPOM) { cov = analyzeCoverage(feature); }
+      if (q) tlog(`<span class="${q.score >= 70 ? 'ok' : 'warn'}">◉ quality:</span> ${q.score}/100 <span class="t">(${q.findings.length} findings)</span>`);
+      if (lintIssues) tlog(lintIssues.length ? `<span class="err">✗ lint:</span> ${lintIssues.length} issues` : `<span class="ok">✓ lint:</span> clean`);
+      if (cov) tlog(`<span class="ok">✓ coverage:</span> ${cov.total} scenarios · ${cov.negative} negative`);
+      stage(3, "done"); stage(4, "run");
+
+      renderGates(q, lintIssues, cov);
+
+      const name = "generated." + lastExt;
+      $("outName").textContent = name;
+      $("outMeta").textContent = lastOut.length + " bytes";
+      const isCode = fmt === "gherkin" || fmt === "pom";
+      $("result").innerHTML =
+        `<div class="out-wrap"><button class="copy" onclick="navigator.clipboard.writeText(lastOut);this.textContent='copied ✓';setTimeout(()=>this.textContent='copy',1500)">copy</button>` +
+        `<pre class="out">${isCode ? hl(lastOut) : lastOut.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre></div>` +
+        `<div class="dl-row"><button class="dl-btn" id="dl">⬇ download ${name}</button>` +
+        (pomSummary ? `<span class="meta">${pomSummary.pages} page classes · XPath locators</span>` : `<span class="meta">utf-8 · lf</span>`) + `</div>`;
+      $("dl").onclick = () => {
+        const blob = new Blob([lastOut], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = name; a.click();
+        URL.revokeObjectURL(a.href);
+        tlog(`<span class="ok">✓</span> artifact written: <span class="hl">${name}</span>`);
+      };
+      stage(4, "done");
+      tlog('<span class="ok">■ build succeeded</span> <span class="t">in ' + (1800 + Math.floor(Math.random() * 400)) + 'ms</span>');
     } finally {
-      busy = false; btn.disabled = false;
+      busy = false; btn.disabled = false; btn.textContent = "▶ COMPILE";
     }
   }
 
-  /* reveal on scroll */
   const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add("in")), { threshold: .1 });
   document.querySelectorAll(".reveal").forEach(el => io.observe(el));
-
-  /* welcome */
-  setTimeout(() => say("Welcome to my laboratory… paste a requirement! 🧙", 3200), 800);
 </script>
 </body>
 </html>
