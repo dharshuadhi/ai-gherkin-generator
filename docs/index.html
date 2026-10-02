@@ -3,145 +3,239 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gherkin Lab — Requirement → Executable Tests</title>
+<title>The Pickle Factory — Requirement → Crunchy Tests</title>
 <style>
-  :root { --paper:#f7f5ee; --card:#ffffff; --ink:#232136; --muted:#7a7690;
-          --line:#e6e2d5; --teal:#0e9f8a; --teal-d:#0b7d6d; --amber:#e8a13c;
-          --red:#e05d5d; --green:#1d9e6c; }
-  * { box-sizing:border-box; }
-  body { background:var(--paper); color:var(--ink); margin:0;
-         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-         -webkit-font-smoothing:antialiased; }
-  .wrap { max-width:1180px; margin:0 auto; padding:2.2rem 1.2rem 4rem; }
-  header.hero { text-align:center; margin-bottom:1.6rem; }
-  header.hero h1 { font-size:2rem; margin:.2rem 0 .4rem; letter-spacing:-.02em; }
-  header.hero h1 .t { color:var(--teal); }
-  header.hero p { color:var(--muted); font-size:.95rem; margin:0; }
-  .steps { display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap; margin:1.4rem 0 2rem; }
-  .step { display:flex; align-items:center; gap:.45rem; background:var(--card);
-          border:1px solid var(--line); border-radius:999px; padding:.42rem .9rem;
-          font-size:.82rem; color:var(--muted); transition:all .3s ease; }
-  .step .n { width:22px; height:22px; border-radius:50%; background:var(--line);
-             display:flex; align-items:center; justify-content:center;
-             font-size:.72rem; font-weight:700; color:var(--muted); transition:all .3s ease; }
-  .step.active { border-color:var(--teal); color:var(--ink); box-shadow:0 2px 10px rgba(14,159,138,.15); }
-  .step.active .n { background:var(--teal); color:#fff; }
-  .step.done .n { background:var(--green); color:#fff; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start; }
-  @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
-  .panel { background:var(--card); border:1px solid var(--line); border-radius:16px;
-           padding:1.2rem; box-shadow:0 2px 12px rgba(35,33,54,.05); }
-  .panel h2 { font-size:.85rem; text-transform:uppercase; letter-spacing:.08em;
-              color:var(--muted); margin:0 0 .8rem; }
-  textarea { width:100%; height:300px; border:1px solid var(--line); border-radius:12px;
-             padding:.9rem; font:inherit; font-size:.88rem; line-height:1.55; resize:vertical;
-             background:#fcfbf7; color:var(--ink); }
-  textarea:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(14,159,138,.12); }
-  .opts { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-top:.9rem; }
-  .seg { display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-  .seg button { border:none; background:transparent; padding:.5rem .9rem; font:inherit;
-                font-size:.82rem; color:var(--muted); cursor:pointer; }
-  .seg button.active { background:var(--ink); color:#fff; font-weight:600; }
-  label.chk { display:flex; align-items:center; gap:.35rem; font-size:.82rem; color:var(--muted);
-              cursor:pointer; }
-  button.go { background:var(--teal); color:#fff; border:none; border-radius:12px;
-              padding:.75rem 1.8rem; font:inherit; font-weight:700; font-size:1rem; cursor:pointer;
-              transition:transform .15s ease, background .15s ease; box-shadow:0 4px 14px rgba(14,159,138,.3); }
-  button.go:hover { background:var(--teal-d); }
-  button.go.pressed { transform:scale(.92); }
-  .scorecard { display:flex; align-items:center; gap:1rem; margin-bottom:.9rem; }
-  .grade { width:64px; height:64px; border-radius:18px; display:flex; align-items:center;
-           justify-content:center; font-size:1.7rem; font-weight:800; color:#fff; flex:none; }
-  .grade.A{background:var(--green)} .grade.B{background:#7ab648} .grade.C{background:var(--amber)}
-  .grade.D,.grade.F{background:var(--red)}
-  .finding { border-left:3px solid var(--amber); background:#fdf6e9; border-radius:0 10px 10px 0;
-             padding:.6rem .8rem; margin:.5rem 0; font-size:.84rem; }
-  .finding.high { border-color:var(--red); background:#fdeeee; }
-  .finding .fix { color:var(--teal-d); display:block; margin-top:.25rem; }
-  pre.out { background:#232136; color:#e8e4d8; border-radius:12px; padding:1rem;
-            font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-            font-size:.8rem; line-height:1.6; overflow:auto; white-space:pre-wrap;
-            max-height:420px; }
-  .kv { display:flex; gap:.5rem; flex-wrap:wrap; margin:.6rem 0; }
-  .pill { border-radius:999px; padding:.3rem .8rem; font-size:.78rem; font-weight:600; }
-  .pill.ok { background:#e2f4ec; color:#146c4e; } .pill.warn { background:#fdf0da; color:#9a6210; }
-  .pill.err { background:#fbe3e3; color:#a83a3a; }
-  button.dl { background:var(--ink); color:#fff; border:none; border-radius:10px;
-              padding:.6rem 1.2rem; font:inherit; font-size:.85rem; cursor:pointer; margin-top:.8rem; }
-  button.dl:hover { opacity:.85; }
-  .empty { color:var(--muted); text-align:center; padding:3rem 1rem; font-size:.9rem; }
-  .empty .big { font-size:2.2rem; display:block; margin-bottom:.6rem; }
-  footer { text-align:center; color:var(--muted); font-size:.78rem; margin-top:3rem; }
-  footer a { color:var(--teal-d); }
-  .repo-link { text-align:center; margin-top:1rem; font-size:.84rem; color:var(--muted); }
-  .repo-link a { color:var(--teal-d); font-weight:600; }
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap');
+  :root{
+    --cream:#faf3e0; --cream2:#f3e8cd; --paper:#fffdf6;
+    --pickle:#4e7c2a; --pickle-d:#33581a; --pickle-l:#8fd14f; --pickle-xl:#c9ec9b;
+    --mustard:#f2b134; --mustard-d:#d1911f; --tomato:#e2574c; --tomato-d:#b93a30;
+    --ink:#2e3a1e; --muted:#7a7f5e; --wood:#8a5a33; --wood-d:#6b421f;
+    --line:#e3d5b3;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--ink);
+    font-family:'Fredoka','Trebuchet MS','Segoe UI',Verdana,sans-serif;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(143,209,79,.14) 0 90px, transparent 91px),
+      radial-gradient(circle at 88% 8%, rgba(242,177,52,.16) 0 70px, transparent 71px),
+      radial-gradient(circle at 78% 82%, rgba(143,209,79,.12) 0 110px, transparent 111px),
+      radial-gradient(circle at 8% 88%, rgba(226,87,76,.08) 0 80px, transparent 81px),
+      repeating-linear-gradient(45deg, var(--cream) 0 26px, var(--cream2) 26px 52px);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
 
-  /* ---------- Gherky (light-theme bubble) ---------- */
-  #mascot { position:fixed; right:20px; bottom:20px; width:84px; z-index:60;
-            transition:transform .75s cubic-bezier(.34,1.3,.64,1); cursor:pointer; }
-  #mascot .bot { animation:bob 2.6s ease-in-out infinite; }
-  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
-  #mascot .antenna { width:5px; height:16px; background:#b9b4c9; margin:0 auto; border-radius:3px; position:relative; }
-  #mascot .antenna::after { content:""; position:absolute; top:-7px; left:-3px; width:11px; height:11px;
-                            border-radius:50%; background:var(--amber); animation:glow 1.6s ease-in-out infinite; }
-  @keyframes glow { 0%,100%{opacity:.5} 50%{opacity:1} }
-  #mascot .head { width:58px; height:46px; margin:0 auto; border-radius:16px;
-                  background:linear-gradient(160deg,#14b89f,#0b7d6d); position:relative;
-                  box-shadow:0 4px 14px rgba(14,159,138,.35); }
-  #mascot .eye { position:absolute; top:15px; width:11px; height:13px; border-radius:50%;
-                 background:#fff; animation:blink 4.2s infinite; }
-  #mascot .eye.left{left:14px} #mascot .eye.right{right:14px}
-  @keyframes blink { 0%,93%,100%{transform:scaleY(1)} 96%{transform:scaleY(.08)} }
-  #mascot .mouth { position:absolute; bottom:9px; left:50%; width:20px; height:8px;
-                   border:2.5px solid #fff; border-top:none; border-radius:0 0 12px 12px;
-                   transform:translateX(-50%); }
-  #mascot .body { width:64px; height:46px; margin:4px auto 0; border-radius:14px;
-                  background:linear-gradient(160deg,#ffffff,#eceadf); border:1px solid var(--line); position:relative; }
-  #mascot .chest { position:absolute; top:12px; left:50%; transform:translateX(-50%);
-                   width:22px; height:22px; border-radius:50%; background:var(--amber);
-                   animation:glow 1.6s ease-in-out infinite; box-shadow:0 0 10px var(--amber); }
-  #mascot .arm { position:absolute; top:6px; width:11px; height:32px; border-radius:6px; background:#0e9f8a; }
-  #mascot .arm.left{left:-9px} #mascot .arm.right{right:-9px; transform-origin:top center;}
-  #mascot.waving .arm.right{ animation:wave .5s ease-in-out 3; }
-  @keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-55deg)}}
-  #mascot.pressing .body{ animation:pressbod .3s ease; }
-  @keyframes pressbod{50%{transform:scaleY(.88)}}
-  #mascot.jumping .bot{ animation:jump .65s ease; }
-  @keyframes jump{0%,100%{transform:translateY(0)}40%{transform:translateY(-34px) rotate(-6deg)}60%{transform:translateY(-34px) rotate(6deg)}}
-  #mascot .bubble { position:absolute; bottom:calc(100% + 10px); right:-6px; min-width:150px; max-width:215px;
-                    background:#fff; border:1px solid var(--line); border-radius:12px;
-                    box-shadow:0 6px 20px rgba(35,33,54,.12);
-                    padding:.55rem .7rem; font-size:.78rem; line-height:1.4; color:var(--ink);
-                    opacity:0; transform:translateY(6px); transition:all .25s ease; pointer-events:none; }
-  #mascot .bubble::after{ content:""; position:absolute; top:100%; right:26px;
-                          border:7px solid transparent; border-top-color:#fff; }
-  #mascot .bubble.show{ opacity:1; transform:translateY(0); }
-  .confetti{ position:fixed; top:-14px; width:9px; height:13px; z-index:99; border-radius:2px;
-             animation:fall 1.9s ease-in forwards; pointer-events:none; }
-  @keyframes fall{ to{ transform:translateY(108vh) rotate(720deg);} }
-  @media (max-width:600px){ #mascot{width:64px; right:12px; bottom:12px;}
-    #mascot .bubble{font-size:.68rem; min-width:120px;} }
+  /* ============ FACTORY SIGN ============ */
+  .signpost{display:flex;justify-content:center;gap:6px;margin-bottom:-6px}
+  .chain{width:8px;height:44px;background:repeating-linear-gradient(180deg,#6b421f 0 6px,#8a5a33 6px 12px);border-radius:4px}
+  .sign{
+    background:linear-gradient(180deg,#9c6633,#7c4f24);
+    border:4px solid var(--wood-d); border-radius:18px;
+    padding:1rem 2.6rem 1.2rem; text-align:center; position:relative;
+    box-shadow:0 10px 0 rgba(107,66,31,.35), 0 18px 30px rgba(60,40,15,.25);
+    transform:rotate(-1.2deg);
+  }
+  .sign h1{
+    margin:0; font-size:clamp(1.7rem,4.5vw,2.9rem); font-weight:700; letter-spacing:.02em;
+    color:#fff8e6; text-shadow:0 3px 0 var(--wood-d), 0 6px 12px rgba(0,0,0,.3);
+  }
+  .sign h1 .pk{color:var(--pickle-xl)}
+  .sign p{margin:.35rem 0 0;color:#ffe9b8;font-size:.95rem;font-weight:500}
+  .sign p em{font-family:'Caveat',cursive;font-size:1.15rem;color:var(--mustard)}
+  .gear{position:absolute;top:50%;width:64px;height:64px;margin-top:-32px;opacity:.9;
+        animation:spin 7s linear infinite;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
+  .gear.g1{left:-34px}.gear.g2{right:-34px;animation-direction:reverse;width:48px;height:48px;margin-top:-24px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .steam{position:absolute;top:-34px;left:50%;width:14px;height:14px;border-radius:50%;
+         background:rgba(255,255,255,.85);animation:puff 2.6s ease-out infinite;pointer-events:none}
+  .steam.s2{animation-delay:.9s;left:calc(50% + 22px)}
+  .steam.s3{animation-delay:1.7s;left:calc(50% - 24px)}
+  @keyframes puff{0%{transform:translateY(8px) scale(.6);opacity:0}30%{opacity:.9}100%{transform:translateY(-46px) scale(1.9);opacity:0}}
+
+  /* ============ CONVEYOR ============ */
+  .belt-wrap{margin:2.2rem 0 .4rem;position:relative}
+  .stations{display:flex;justify-content:space-between;max-width:1000px;margin:0 auto .4rem;padding:0 .6rem}
+  .station{flex:1;text-align:center;position:relative;opacity:.45;transition:all .3s}
+  .station .ic{font-size:1.7rem;display:block;filter:grayscale(1);transition:all .3s}
+  .station .lb{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .station.on{opacity:1;transform:translateY(-4px)}
+  .station.on .ic{filter:none;animation:stationpop .45s cubic-bezier(.34,1.6,.64,1)}
+  .station.on .lb{color:var(--pickle-d)}
+  @keyframes stationpop{0%{transform:scale(.4) rotate(-14deg)}100%{transform:scale(1) rotate(0)}}
+  .belt{
+    height:64px;border-radius:14px;position:relative;overflow:hidden;
+    background:#3a3f35;border-top:5px solid #2b2f27;border-bottom:5px solid #2b2f27;
+    box-shadow:inset 0 6px 12px rgba(0,0,0,.45), 0 6px 0 rgba(0,0,0,.12);
+  }
+  .belt::before{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(115deg, transparent 0 26px, rgba(255,255,255,.09) 26px 52px);}
+  .belt.running::before{animation:beltmove .55s linear infinite}
+  @keyframes beltmove{to{background-position:60px 0}}
+  .belt .rollers{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:center;padding:0 6px;pointer-events:none}
+  .belt .rollers i{width:14px;height:44px;border-radius:7px;background:linear-gradient(180deg,#8b8f86,#5c6058)}
+  .traveller{position:absolute;top:50%;left:-60px;font-size:2rem;transform:translateY(-58%);
+             animation:travel 2.6s linear forwards;filter:drop-shadow(0 4px 4px rgba(0,0,0,.4))}
+  @keyframes travel{to{left:calc(100% + 20px)}}
+
+  /* ============ PANELS ============ */
+  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:1.3rem;margin-top:1.6rem;align-items:start}
+  @media(max-width:920px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--paper);border:3px solid var(--line);border-radius:20px;padding:1.2rem 1.3rem;
+         box-shadow:0 6px 0 rgba(138,90,51,.18);position:relative}
+  .panel > h2{margin:0 0 .9rem;font-size:1.05rem;letter-spacing:.05em;text-transform:uppercase;color:var(--pickle-d)}
+  .panel > h2 .tag{font-family:'Caveat',cursive;font-size:1.25rem;color:var(--tomato);text-transform:none;letter-spacing:0}
+  .crate{border:3px dashed var(--wood);border-radius:14px;padding:.7rem;background:#fdf8ea}
+  textarea{width:100%;height:290px;border:none;background:transparent;resize:vertical;
+           font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.6;color:var(--ink)}
+  textarea:focus{outline:none}
+  .recipe-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1rem}
+  .seg{display:flex;border:3px solid var(--pickle);border-radius:14px;overflow:hidden;background:#fff}
+  .seg button{border:none;background:transparent;padding:.55rem .95rem;font:inherit;font-weight:600;
+               font-size:.84rem;color:var(--pickle-d);cursor:pointer;transition:all .18s}
+  .seg button + button{border-left:2px solid var(--pickle-xl)}
+  .seg button.active{background:var(--pickle);color:#fff}
+  .seg button:hover:not(.active){background:var(--pickle-xl)}
+  .toggle{display:flex;align-items:center;gap:.45rem;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;user-select:none}
+  .toggle input{display:none}
+  .toggle .sw{width:44px;height:24px;border-radius:14px;background:#d8cba6;position:relative;transition:background .2s;flex:none}
+  .toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+                     background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:left .2s}
+  .toggle input:checked + .sw{background:var(--pickle)}
+  .toggle input:checked + .sw::after{left:23px}
+  .toggle input:checked ~ .tl{color:var(--pickle-d)}
+
+  /* ============ LEVER ============ */
+  .lever-panel{text-align:center;overflow:visible}
+  .lever-stage{position:relative;height:300px;margin:0 auto;max-width:340px}
+  .lever-base{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);width:150px;height:56px;
+              background:linear-gradient(180deg,#a8713a,#7c4f24);border:4px solid var(--wood-d);border-radius:16px;
+              box-shadow:0 6px 0 rgba(107,66,31,.4)}
+  .lever-base::after{content:"PULL TO PICKLE";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                     font-size:.62rem;font-weight:700;letter-spacing:.12em;color:#ffe9b8;white-space:nowrap}
+  .lever-arm{position:absolute;bottom:66px;left:50%;width:20px;height:170px;margin-left:-10px;
+             background:linear-gradient(90deg,#c9c9c9,#8f8f8f 60%,#c9c9c9);border-radius:10px;
+             transform-origin:50% 100%;transform:rotate(-38deg);transition:transform .28s cubic-bezier(.34,1.4,.64,1);
+             cursor:pointer;box-shadow:0 4px 8px rgba(0,0,0,.25)}
+  .lever-arm::before{content:"";position:absolute;top:-34px;left:50%;transform:translateX(-50%);
+                     width:56px;height:56px;border-radius:50%;
+                     background:radial-gradient(circle at 35% 30%, #ff8a7a, var(--tomato) 55%, var(--tomato-d));
+                     box-shadow:0 5px 0 var(--tomato-d), 0 8px 14px rgba(0,0,0,.3);cursor:pointer}
+  .lever-arm.pulled{transform:rotate(38deg)}
+  .lever-note{font-family:'Caveat',cursive;font-size:1.3rem;color:var(--tomato);margin-top:.4rem;transform:rotate(-2deg)}
+  .gherky-spot{position:absolute;bottom:8px;right:6px;width:110px;height:130px;pointer-events:none}
+
+  /* ============ RESULTS ============ */
+  .results{margin-top:1.3rem;display:grid;grid-template-columns:.9fr 1.1fr;gap:1.3rem;align-items:start}
+  @media(max-width:920px){.results{grid-template-columns:1fr}}
+  .inspector{background:linear-gradient(180deg,#fffdf6,#fdf6e3)}
+  .stamp-zone{display:flex;align-items:center;gap:1rem;margin-bottom:.8rem;min-height:96px}
+  .stamp{width:92px;height:92px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+         font-size:2.6rem;font-weight:700;border:6px double currentColor;transform:rotate(-12deg);opacity:0}
+  .stamp.slam{animation:slam .5s cubic-bezier(.2,2.4,.4,1) forwards}
+  @keyframes slam{0%{opacity:0;transform:rotate(-12deg) scale(2.6)}60%{opacity:1;transform:rotate(-12deg) scale(.94)}100%{opacity:1;transform:rotate(-12deg) scale(1)}}
+  .stamp.A{color:#1d9e6c;background:rgba(29,158,108,.1)}
+  .stamp.B{color:#7ab648;background:rgba(122,182,72,.12)}
+  .stamp.C{color:#d1911f;background:rgba(242,177,52,.14)}
+  .stamp.D,.stamp.F{color:var(--tomato);background:rgba(226,87,76,.1)}
+  .stamp-meta b{font-size:1.05rem}
+  .stamp-meta span{color:var(--muted);font-size:.85rem}
+  .finding{border-left:5px solid var(--mustard);background:#fff8e2;border-radius:0 12px 12px 0;
+           padding:.6rem .85rem;margin:.55rem 0;font-size:.85rem;box-shadow:0 2px 5px rgba(0,0,0,.06)}
+  .finding.high{border-color:var(--tomato);background:#fdeeee}
+  .finding .fix{color:var(--pickle-d);display:block;margin-top:.25rem;font-weight:600}
+  .kv{display:flex;gap:.5rem;flex-wrap:wrap;margin:.7rem 0}
+  .pill{border-radius:999px;padding:.32rem .85rem;font-size:.78rem;font-weight:700;border:2px solid}
+  .pill.ok{background:#e7f6df;color:#2f6b1e;border-color:#9ed07e}
+  .pill.warn{background:#fdf0da;color:#9a6210;border-color:#eec27a}
+  .pill.err{background:#fbe3e3;color:#a83a3a;border-color:#ef9a9a}
+  .jar{position:relative}
+  .jar-lid{height:34px;background:linear-gradient(180deg,var(--mustard),var(--mustard-d));
+           border:4px solid var(--mustard-d);border-bottom:none;border-radius:16px 16px 0 0;
+           position:relative;box-shadow:inset 0 3px 0 rgba(255,255,255,.4)}
+  .jar-lid::before{content:"🥒 DILL-ICIOUS FEATURE FILE 🥒";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                   font-size:.72rem;font-weight:700;letter-spacing:.14em;color:#7a4d0e}
+  pre.out{background:#20301a;color:#dff0c8;border:4px solid var(--mustard-d);border-top:none;border-radius:0 0 16px 16px;
+          padding:1.1rem;margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.65;
+          overflow:auto;white-space:pre-wrap;max-height:430px;min-height:180px}
+  pre.out:empty::after{content:""}
+  button.dl{background:var(--tomato);color:#fff;border:none;border-radius:14px;padding:.7rem 1.5rem;
+            font:inherit;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:.9rem;
+            box-shadow:0 4px 0 var(--tomato-d);transition:transform .12s}
+  button.dl:hover{filter:brightness(1.07)}
+  button.dl:active{transform:translateY(3px);box-shadow:none}
+  .empty{text-align:center;padding:2.6rem 1rem;color:var(--muted);font-size:.92rem}
+  .empty .big{font-size:3rem;display:block;margin-bottom:.5rem;animation:bob 2.6s ease-in-out infinite}
+  .repo-link{text-align:center;margin-top:1.6rem;font-size:.85rem;color:var(--muted)}
+  .repo-link a{color:var(--pickle-d);font-weight:700}
+  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:1.2rem}
+  footer .fine{font-family:'Caveat',cursive;font-size:1.1rem;color:var(--pickle-d)}
+
+  /* ============ GHERKY (pickle foreman) ============ */
+  #gherky{position:fixed;right:26px;bottom:18px;width:96px;z-index:60;cursor:pointer;
+          transition:transform .8s cubic-bezier(.45,.05,.35,1)}
+  #gherky .pk-bob{animation:bob 2.8s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-8px) rotate(1.5deg)}}
+  #gherky.waddling .pk-bob{animation:waddle .38s ease-in-out infinite}
+  @keyframes waddle{0%,100%{transform:translateY(0) rotate(-7deg)}50%{transform:translateY(-6px) rotate(7deg)}}
+  #gherky .eye{animation:blink 4.4s infinite;transform-origin:center;transform-box:fill-box}
+  @keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+  #gherky .armR{transform-origin:78px 96px;transition:transform .25s}
+  #gherky.pulling .armR{transform:rotate(-72deg)}
+  #gherky.jumping .pk-bob{animation:jump .7s ease}
+  @keyframes jump{0%,100%{transform:translateY(0)}35%{transform:translateY(-40px) rotate(-8deg)}65%{transform:translateY(-40px) rotate(8deg)}}
+  #gherky .bubble{position:absolute;bottom:calc(100% + 12px);right:-8px;min-width:160px;max-width:230px;
+                  background:#fffdf6;border:3px solid var(--pickle);border-radius:14px;
+                  box-shadow:0 8px 22px rgba(46,58,30,.2);padding:.6rem .75rem;font-size:.8rem;line-height:1.45;
+                  opacity:0;transform:translateY(8px) rotate(1deg);transition:all .25s;pointer-events:none}
+  #gherky .bubble::after{content:"";position:absolute;top:100%;right:30px;border:8px solid transparent;border-top-color:var(--pickle)}
+  #gherky .bubble.show{opacity:1;transform:translateY(0) rotate(-1deg)}
+  .pickle-confetti{position:fixed;top:-30px;font-size:1.4rem;z-index:99;pointer-events:none;animation:fall 2.1s ease-in forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(680deg)}}
+  @media(max-width:640px){
+    #gherky{width:70px;right:10px;bottom:10px}
+    .gear{display:none}
+    .station .lb{font-size:.58rem}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header class="hero">
-    <h1>🧪 Gherkin <span class="t">Lab</span></h1>
-    <p>Write a requirement. Get tested, executable test cases. Everything runs in your browser.</p>
-  </header>
+  <!-- FACTORY SIGN -->
+  <div class="signpost"><div class="chain"></div><div class="chain" style="margin-left:280px"></div></div>
+  <div style="display:flex;justify-content:center">
+    <div class="sign">
+      <svg class="gear g1" viewBox="0 0 64 64"><path fill="#f2b134" stroke="#6b421f" stroke-width="2" d="M32 8l3 7 7-3 1 8 8-1 3 7 7 3-3 7 8 1-1 8-7 3-3 7-7-3-1 8-8 1-3 7-7 3 3-7-8-1 1-8 7-3 3-7 7 3 1-8 8-1z"/><circle cx="32" cy="32" r="9" fill="#7c4f24"/></svg>
+      <svg class="gear g2" viewBox="0 0 64 64"><path fill="#8fd14f" stroke="#33581a" stroke-width="2" d="M32 8l3 7 7-3 1 8 8-1 3 7 7 3-3 7 8 1-1 8-7 3-3 7-7-3-1 8-8 1-3 7-7 3 3-7-8-1 1-8 7-3 3-7 7 3 1-8 8-1z"/><circle cx="32" cy="32" r="9" fill="#33581a"/></svg>
+      <div class="steam"></div><div class="steam s2"></div><div class="steam s3"></div>
+      <h1>🥒 THE <span class="pk">PICKLE</span> FACTORY</h1>
+      <p>Raw requirements in → <em>crunchy, executable tests out.</em> Everything brines right in your browser.</p>
+    </div>
+  </div>
 
-  <div class="steps" id="steps">
-    <div class="step active" data-s="0"><span class="n">1</span> Write requirement</div>
-    <div class="step" data-s="1"><span class="n">2</span> Quality score</div>
-    <div class="step" data-s="2"><span class="n">3</span> Generate tests</div>
-    <div class="step" data-s="3"><span class="n">4</span> Export</div>
+  <!-- CONVEYOR -->
+  <div class="belt-wrap">
+    <div class="stations" id="stations">
+      <div class="station" data-s="0"><span class="ic">📥</span><span class="lb">Intake</span></div>
+      <div class="station" data-s="1"><span class="ic">🔪</span><span class="lb">Slice</span></div>
+      <div class="station" data-s="2"><span class="ic">🫙</span><span class="lb">Brine</span></div>
+      <div class="station" data-s="3"><span class="ic">🔍</span><span class="lb">Inspect</span></div>
+      <div class="station" data-s="4"><span class="ic">🏷️</span><span class="lb">Jar it</span></div>
+    </div>
+    <div class="belt" id="belt">
+      <div class="rollers"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
   </div>
 
   <div class="grid">
+    <!-- LOADING DOCK -->
     <div class="panel">
-      <h2>📝 Requirement</h2>
-      <textarea id="story"># User login
+      <h2>📦 Loading dock <span class="tag">— dump your raw requirement here</span></h2>
+      <div class="crate">
+        <textarea id="story"># User login
 
 As a registered user, I want to log in with my email and password,
 so that I can access my account securely.
@@ -149,46 +243,84 @@ so that I can access my account securely.
 Acceptance Criteria:
 - When the user submits valid credentials, then they are taken to the dashboard
 - An error is shown for unregistered email addresses (admin, user, guest)</textarea>
-      <div class="opts">
-        <div class="seg" id="fmtTabs">
-          <button data-fmt="gherkin" class="active">Gherkin</button>
-          <button data-fmt="json">JSON</button>
-          <button data-fmt="markdown">Markdown</button>
-          <button data-fmt="pom">Page Objects</button>
-        </div>
-        <label class="chk"><input type="checkbox" id="wantQuality" checked> quality</label>
-        <label class="chk"><input type="checkbox" id="wantReport" checked> coverage</label>
-        <label class="chk"><input type="checkbox" id="wantLint" checked> lint</label>
       </div>
-      <div class="opts">
-        <button class="go" id="go">Generate tests ✨</button>
+      <h2 style="margin-top:1.1rem">🧂 Pickling recipe</h2>
+      <div class="recipe-row">
+        <div class="seg" id="fmtTabs">
+          <button data-fmt="gherkin" class="active">🥒 Gherkin</button>
+          <button data-fmt="json">🧾 JSON</button>
+          <button data-fmt="markdown">📋 Markdown</button>
+          <button data-fmt="pom">🏺 Page Objects</button>
+        </div>
+      </div>
+      <div class="recipe-row">
+        <label class="toggle"><input type="checkbox" id="wantQuality" checked><span class="sw"></span><span class="tl">🔍 Brine inspector</span></label>
+        <label class="toggle"><input type="checkbox" id="wantReport" checked><span class="sw"></span><span class="tl">📊 Crunch report</span></label>
+        <label class="toggle"><input type="checkbox" id="wantLint" checked><span class="sw"></span><span class="tl">🧼 Rinse (lint)</span></label>
       </div>
     </div>
 
-    <div class="panel" id="resultPanel">
-      <h2>🔬 Results</h2>
-      <div id="result">
-        <div class="empty"><span class="big">🧪</span>
-          Your quality score, scenarios and coverage will appear here.<br>
-          Gherky will do the clicking. 👉🤖
-        </div>
+    <!-- THE BIG LEVER -->
+    <div class="panel lever-panel">
+      <h2>🎛️ The big lever <span class="tag">— Gherky pulls it. Or you can.</span></h2>
+      <div class="lever-stage">
+        <div class="lever-arm" id="lever" title="Pull to pickle!"></div>
+        <div class="lever-base"></div>
+        <div class="gherky-spot"></div>
       </div>
+      <div class="lever-note">← give it a yank! the belt does the rest</div>
     </div>
   </div>
 
-  <p class="repo-link">This demo runs the offline engine in your browser — no data leaves this page.
-    The full project (Azure OpenAI engine, CLI, headless execution) is on
+  <!-- RESULTS -->
+  <div class="results">
+    <div class="panel inspector" id="inspectorPanel">
+      <h2>🔍 Brine inspector <span class="tag">— grades your requirement before it ships</span></h2>
+      <div id="quality"><div class="empty"><span class="big">🥒</span>The belt is empty…<br>feed the dock a requirement, then yank the lever!</div></div>
+    </div>
+    <div class="panel">
+      <h2>🫙 Fresh from the jar <span class="tag">— hot, crunchy scenarios</span></h2>
+      <div id="result"><div class="empty"><span class="big">🫙</span>Nothing brining yet.<br>Your feature file lands here, sealed &amp; labeled.</div></div>
+    </div>
+  </div>
+
+  <p class="repo-link">This demo runs the offline pickling engine in your browser — no cucumbers leave this page. 🥒<br>
+    The full factory (Azure OpenAI engine, CLI, headless execution) lives on
     <a href="https://github.com/dharshuadhi/ai-gherkin-generator">GitHub</a>.</p>
-  <footer>Built by Dharshini Adimoolam · MIT License</footer>
+  <footer><span class="fine">No cucumbers were harmed in the making of these tests.</span><br>
+    Built by Dharshini Adimoolam · MIT License</footer>
 </div>
 
-<div id="mascot" title="Gherky">
+<!-- GHERKY -->
+<div id="gherky" title="Gherky, foreman of the pickle factory">
   <div class="bubble" id="bubble"></div>
-  <div class="bot">
-    <div class="antenna"></div>
-    <div class="head"><div class="eye left"></div><div class="eye right"></div><div class="mouth"></div></div>
-    <div class="body"><div class="arm left"></div><div class="arm right"></div><div class="chest"></div></div>
-  </div>
+  <svg class="pk-bob" viewBox="0 0 96 130" width="96" height="130" aria-label="Gherky the pickle">
+    <!-- hard hat -->
+    <path d="M28 26 Q48 2 68 26 L68 32 L28 32 Z" fill="#f2b134" stroke="#d1911f" stroke-width="3"/>
+    <rect x="22" y="30" width="52" height="8" rx="4" fill="#d1911f"/>
+    <!-- pickle body -->
+    <path d="M48 34 C74 34 84 58 84 88 C84 112 66 126 48 126 C30 126 12 112 12 88 C12 58 22 34 48 34 Z"
+          fill="#5c8f2f" stroke="#33581a" stroke-width="3.5"/>
+    <!-- bumps -->
+    <g fill="#8fd14f" opacity=".85">
+      <ellipse cx="32" cy="58" rx="5" ry="8"/><ellipse cx="62" cy="52" rx="5" ry="8"/>
+      <ellipse cx="48" cy="76" rx="5" ry="8"/><ellipse cx="28" cy="96" rx="5" ry="8"/>
+      <ellipse cx="68" cy="94" rx="5" ry="8"/><ellipse cx="48" cy="112" rx="5" ry="7"/>
+    </g>
+    <!-- face -->
+    <ellipse class="eye" cx="38" cy="66" rx="6" ry="7.5" fill="#fff"/>
+    <ellipse class="eye" cx="58" cy="66" rx="6" ry="7.5" fill="#fff"/>
+    <circle cx="39.5" cy="68" r="3" fill="#2e3a1e"/><circle cx="59.5" cy="68" r="3" fill="#2e3a1e"/>
+    <path d="M40 84 Q48 92 56 84" stroke="#2e3a1e" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="30" cy="76" r="3.5" fill="#e2574c" opacity=".55"/><circle cx="66" cy="76" r="3.5" fill="#e2574c" opacity=".55"/>
+    <!-- arms -->
+    <path d="M14 92 Q4 96 6 106" stroke="#33581a" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <g class="armR"><path d="M82 92 Q94 96 92 108" stroke="#33581a" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <circle cx="92" cy="110" r="5" fill="#8fd14f" stroke="#33581a" stroke-width="2"/></g>
+    <!-- feet -->
+    <ellipse cx="36" cy="128" rx="9" ry="4.5" fill="#33581a"/>
+    <ellipse cx="60" cy="128" rx="9" ry="4.5" fill="#33581a"/>
+  </svg>
 </div>
 
 <script src="engine.js"></script>
@@ -207,81 +339,84 @@ Acceptance Criteria:
     };
   });
 
-  function setStep(n) {
-    document.querySelectorAll("#steps .step").forEach(el => {
-      const s = +el.dataset.s;
-      el.classList.toggle("active", s === n);
-      el.classList.toggle("done", s < n);
-      if (s < n) el.querySelector(".n").textContent = "✓";
-      else el.querySelector(".n").textContent = s + 1;
-    });
+  /* ---------- conveyor stations ---------- */
+  const stations = [...document.querySelectorAll("#stations .station")];
+  const belt = $("belt");
+  function setStation(n) {
+    stations.forEach((el, i) => el.classList.toggle("on", i <= n));
+  }
+  function resetStations() { stations.forEach(el => el.classList.remove("on")); }
+  function rollPickles() {
+    for (let i = 0; i < 4; i++) {
+      const p = document.createElement("div");
+      p.className = "traveller";
+      p.textContent = ["🥒", "🥒", "🫙", "🥒"][i];
+      p.style.animationDelay = (i * 0.45) + "s";
+      belt.appendChild(p);
+      setTimeout(() => p.remove(), 4600);
+    }
   }
 
   /* ---------- Gherky ---------- */
-  const mascot = $("mascot"), bubble = $("bubble");
+  const gherky = $("gherky"), bubble = $("bubble"), lever = $("lever");
   let bubbleTimer = null;
-  function say(text, ms = 2600) {
+  function say(text, ms = 2800) {
     bubble.textContent = text;
     bubble.classList.add("show");
     clearTimeout(bubbleTimer);
     if (ms) bubbleTimer = setTimeout(() => bubble.classList.remove("show"), ms);
   }
   async function walkTo(el) {
-    const m = mascot.getBoundingClientRect(), b = el.getBoundingClientRect();
-    const dx = (b.left + b.width / 2 - 30) - (m.left + m.width / 2);
-    const dy = (b.top - 110) - m.top;
-    mascot.style.transform = `translate(${dx}px, ${dy}px)`;
-    await wait(800);
+    gherky.classList.add("waddling");
+    const m = gherky.getBoundingClientRect(), b = el.getBoundingClientRect();
+    const dx = (b.left + b.width / 2) - (m.left + m.width / 2) - 60;
+    const dy = (b.top + b.height - 40) - (m.top + m.height);
+    gherky.style.transform = `translate(${dx}px, ${dy}px)`;
+    await wait(850);
+    gherky.classList.remove("waddling");
   }
-  function pressButton(el) {
-    mascot.classList.add("pressing");
-    el.classList.add("pressed");
-    setTimeout(() => { mascot.classList.remove("pressing"); el.classList.remove("pressed"); }, 320);
-  }
+  function goHome() { gherky.style.transform = ""; }
   function celebrate() {
-    mascot.classList.add("jumping");
-    setTimeout(() => mascot.classList.remove("jumping"), 700);
-    const colors = ["#0e9f8a", "#e8a13c", "#1d9e6c", "#e05d5d", "#232136"];
-    for (let i = 0; i < 26; i++) {
+    gherky.classList.add("jumping");
+    setTimeout(() => gherky.classList.remove("jumping"), 750);
+    for (let i = 0; i < 22; i++) {
       const c = document.createElement("div");
-      c.className = "confetti";
-      c.style.left = (38 + Math.random() * 24) + "vw";
-      c.style.background = colors[i % colors.length];
-      c.style.animationDelay = (Math.random() * 0.35) + "s";
+      c.className = "pickle-confetti";
+      c.textContent = ["🥒", "🫙", "✨"][i % 3];
+      c.style.left = (30 + Math.random() * 40) + "vw";
+      c.style.animationDelay = (Math.random() * 0.4) + "s";
       document.body.appendChild(c);
-      setTimeout(() => c.remove(), 2400);
+      setTimeout(() => c.remove(), 2600);
     }
   }
-  function goHome() { mascot.style.transform = ""; }
-  const tips = [
-    "Tip: value lists like (admin, user, guest) become Scenario Outlines! 🧬",
-    "Tip: keep 'quality' on — I'll grade your requirement first! 🎯",
-    "Psst… I run 100% in your browser. No servers were harmed. 🤖",
-    "Vague words like 'fast' make me sad. Give me numbers! 🔢",
+  const puns = [
+    "I'm kind of a big dill around here. 🥒",
+    "Relish the moment — quality takes time! ✨",
+    "Brine and shine! Another crisp batch. 🫙",
+    "You should see my LinkedIn: 'Professional Pickler'. 😎",
+    "Vague words like 'fast' give me heartburn. Give me numbers! 🔢",
+    "I run 100% in your browser. No servers were brined. 🤖",
+    "Tip: (admin, user, guest) becomes a Scenario Outline. Brine-illiant! 🧬",
   ];
-  mascot.addEventListener("click", () => {
-    mascot.classList.add("waving");
-    setTimeout(() => mascot.classList.remove("waving"), 1600);
-    say(tips[Math.floor(Math.random() * tips.length)]);
-  });
-  setTimeout(() => say("Hi! I'm Gherky — write a requirement, I'll handle the rest! 🤖", 4200), 800);
+  gherky.addEventListener("click", () => say(puns[Math.floor(Math.random() * puns.length)]));
+  setTimeout(() => say("Howdy! I'm Gherky — dump a requirement on the dock, then yank the lever! 🥒", 5200), 900);
 
-  /* ---------- generation ---------- */
+  /* ---------- result rendering ---------- */
   function qualityCard(q) {
-    let h = `<div class="scorecard"><div class="grade ${q.grade}">${q.grade}</div>
-      <div><b>Requirement quality: ${q.score}/100</b><br>
-      <span style="color:var(--muted);font-size:.84rem">${q.findings.length} finding${q.findings.length === 1 ? "" : "s"}</span></div></div>`;
+    let h = `<div class="stamp-zone"><div class="stamp ${q.grade}" id="stamp">${q.grade}</div>
+      <div class="stamp-meta"><b>Requirement quality: ${q.score}/100</b><br>
+      <span>${q.findings.length} finding${q.findings.length === 1 ? "" : "s"} from the brine inspector</span></div></div>`;
     q.findings.forEach(f => {
       h += `<div class="finding ${f.severity}"><b>[${f.severity}]</b> ${f.message}<span class="fix">→ ${f.suggestion}</span></div>`;
     });
-    if (!q.findings.length) h += `<div class="kv"><span class="pill ok">✓ crisp, testable requirement</span></div>`;
+    if (!q.findings.length) h += `<div class="kv"><span class="pill ok">✓ crisp, crunchy, testable</span></div>`;
     return h;
   }
 
   function doGenerate() {
     const story = $("story").value;
     const isPOM = fmt === "pom";
-    const { out, feature } = generateFromText(story, "gherkin");
+    const { feature } = generateFromText(story, "gherkin");
     let pomSummary = null;
     if (isPOM) {
       const r = generatePOMPreview(feature);
@@ -292,36 +427,38 @@ Acceptance Criteria:
       lastOut = g.out;
       lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
     }
-    let h = "";
 
     let score = null;
     if ($("wantQuality").checked) {
       const q = analyzeQuality(parseStoryLite(story));
       score = q.score;
-      h += qualityCard(q);
-      setStep(1);
+      $("quality").innerHTML = qualityCard(q);
+      requestAnimationFrame(() => $("stamp").classList.add("slam"));
+    } else {
+      $("quality").innerHTML = `<div class="empty"><span class="big">😴</span>Inspector's on a coffee break.<br>Flip the 🔍 toggle to wake him up.</div>`;
     }
+
     const fmtLabel = isPOM ? "Page Objects (Python)" : fmt;
-    h += `<h2 style="margin-top:1.2rem">📄 Generated (${fmtLabel})</h2>`;
+    let h = `<div class="kv"><span class="pill ok">🥒 sealed fresh</span><span class="pill warn">${fmtLabel}</span></div>`;
     if (isPOM && pomSummary) {
       h += `<div class="kv"><span class="pill ok">${pomSummary.pages} page classes</span>`
          + `<span class="pill ok">${pomSummary.tests} tests</span>`
          + `<span class="pill warn">XPath locators</span></div>`;
     }
-    h += `<pre class="out"></pre><div class="kv">`;
+    h += `<div class="jar"><div class="jar-lid"></div><pre class="out"></pre></div><div class="kv">`;
     if (!isPOM && $("wantReport").checked) {
       const c = analyzeCoverage(feature);
       h += `<span class="pill ok">${c.total} scenarios</span>
             <span class="pill ${c.negative ? "warn" : "ok"}">${c.negative} negative</span>
             <span class="pill ${c.outlines ? "ok" : "warn"}">${c.outlines} outlines</span>`;
-      if (c.warnings.length) h += `<span class="pill warn">⚠ ${c.warnings.length} coverage note${c.warnings.length === 1 ? "" : "s"}</span>`;
+      if (c.warnings.length) h += `<span class="pill warn">⚠ ${c.warnings.length} crunch note${c.warnings.length === 1 ? "" : "s"}</span>`;
     }
     if (!isPOM && $("wantLint").checked) {
       const issues = lintGherkin(lastOut);
-      h += issues.length ? `<span class="pill err">✗ ${issues.length} lint issue${issues.length === 1 ? "" : "s"}</span>`
-                         : `<span class="pill ok">✓ lint clean</span>`;
+      h += issues.length ? `<span class="pill err">✗ ${issues.length} rinse issue${issues.length === 1 ? "" : "s"}</span>`
+                         : `<span class="pill ok">✓ squeaky clean</span>`;
     }
-    h += `</div><button class="dl" id="dl">⬇ Download .${lastExt}</button>`;
+    h += `</div><button class="dl" id="dl">🫙 Jar it! Download .${lastExt}</button>`;
     $("result").innerHTML = h;
     $("result").querySelector("pre.out").textContent = lastOut;
     $("dl").onclick = () => {
@@ -331,30 +468,44 @@ Acceptance Criteria:
       a.download = "generated." + lastExt;
       a.click();
       URL.revokeObjectURL(a.href);
-      setStep(3);
+      setStation(4);
+      say("Sealed & labeled! Straight to the pantry. 🏷️", 2600);
     };
-    setStep(2);
     return { scenarios: isPOM && pomSummary ? pomSummary.tests : feature.scenarios.length, score };
   }
 
+  /* ---------- the big pull ---------- */
   let busy = false;
-  $("go").addEventListener("click", async () => {
+  async function startPickling() {
     if (busy) return;
-    if (!$("story").value.trim()) { say("Write a requirement first! 📝"); setStep(0); return; }
+    if (!$("story").value.trim()) { say("The dock is empty! Paste a requirement first! 📦"); setStation(0); return; }
     busy = true;
     try {
-      say("On it! ✨");
-      await walkTo($("go"));
-      pressButton($("go"));
-      say("Scoring & generating…");
-      await wait(450);
+      resetStations();
+      say("Fresh batch incoming! 🥒");
+      await walkTo(lever);
+      gherky.classList.add("pulling");
+      lever.classList.add("pulled");
+      say("YANK! 💪");
+      await wait(320);
+      gherky.classList.remove("pulling");
+      belt.classList.add("running");
+      rollPickles();
+      setStation(0); say("Intaking the raw goods… 📥"); await wait(500);
+      setStation(1); say("Slicing into scenarios… 🔪"); await wait(500);
+      setStation(2); say("Brining in Gherkin… 🫙");
       const s = doGenerate();
+      await wait(600);
+      setStation(3); say("Inspector grades the batch… 🔍"); await wait(500);
+      lever.classList.remove("pulled");
+      belt.classList.remove("running");
       celebrate();
-      say(`Done! ${s.scenarios} scenarios` + (s.score !== null ? `, quality ${s.score}/100` : "") + " 🎉", 3400);
-      await wait(2000);
+      say(`Done! ${s.scenarios} crunchy scenarios` + (s.score !== null ? `, graded ${s.score}/100` : "") + " 🎉", 3600);
+      await wait(2200);
       goHome();
     } finally { busy = false; }
-  });
+  }
+  lever.addEventListener("click", startPickling);
 </script>
 </body>
 </html>
