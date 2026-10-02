@@ -4,6 +4,8 @@ Turn product requirements and user stories into ready-to-run **Gherkin feature f
 through a CLI or a web UI — with an AI engine (Azure OpenAI) and an offline rule-based
 engine that works with no API key.
 
+🌐 **Live demo (runs in your browser):** https://dharshuadhi.github.io/ai-gherkin-generator/
+
 ## How it works
 
 ```mermaid
@@ -100,13 +102,15 @@ author what to fix, then generates the tests.
 
 ## Web UI
 
+**Try it instantly:** https://dharshuadhi.github.io/ai-gherkin-generator/ — paste a story,
+get the quality score and generated tests right in the browser (with Gherky the robot 🤖).
+
+To run the Flask version locally instead:
+
 ```bash
 pip install -r requirements.txt
-python app.py
+python app.py   # then open http://127.0.0.1:5000 on THIS machine
 ```
-
-Open http://127.0.0.1:5000 — paste a story, choose engine and format, and get the
-generated file in the browser with coverage and lint results, plus a download button.
 
 ## CLI
 

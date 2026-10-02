@@ -3,138 +3,183 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Gherkin Generator</title>
+<title>Gherkin Lab — Requirement → Executable Tests</title>
 <style>
-  :root { --bg:#14121f; --card:#1e1a33; --line:#3b3355; --txt:#d6d0ea;
-          --lav:#a78bfa; --amber:#f5c86e; --muted:#9a93b8; }
-  * { box-sizing: border-box; }
-  body { background:var(--bg); color:var(--txt);
-         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-         max-width: 920px; margin: 0 auto; padding: 2rem 1rem 4rem; }
-  h1 { color: var(--lav); font-size: 1.6rem; }
-  h1 .sub { display:block; font-size:.85rem; color:var(--muted); font-weight:normal; margin-top:.4rem; }
-  h2 { color: var(--amber); font-size: 1.05rem; margin-top: 1.8rem; }
-  textarea { width:100%; height:230px; background:var(--card); color:var(--txt);
-             border:1px solid var(--line); border-radius:10px; padding:.9rem; font:inherit; resize:vertical; }
-  textarea:focus { outline:none; border-color:var(--lav); }
-  .controls { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; margin:1rem 0; }
-  select { background:var(--card); color:var(--txt); border:1px solid var(--line);
-           border-radius:8px; padding:.55rem .8rem; font:inherit; }
-  label.chk { display:flex; align-items:center; gap:.35rem; color:var(--muted); font-size:.85rem; }
-  button.go { background:var(--lav); color:var(--bg); border:none; border-radius:10px;
-              padding:.7rem 1.6rem; font:inherit; font-weight:bold; cursor:pointer; font-size:1rem;
-              transition: transform .15s ease; }
-  button.go:hover { background:#c4b5fd; }
-  button.go.pressed { transform: scale(.9); background:#c4b5fd; }
-  button.dl { background:transparent; color:var(--lav); border:1px solid var(--lav);
-              border-radius:10px; padding:.55rem 1.1rem; font:inherit; cursor:pointer; margin-top:.8rem; }
-  button.dl:hover { background:var(--lav); color:var(--bg); }
-  pre { background:var(--card); border:1px solid var(--line); border-radius:10px;
-        padding:1.1rem; overflow:auto; white-space:pre-wrap; word-break:break-word;
-        font-size:.85rem; line-height:1.55; }
-  .ok { color:#7ee787; } .warn { color:var(--amber); } .err { color:#ff7b72; }
-  .hint { color:var(--muted); font-size:.82rem; margin-top:1.6rem; }
-  .hint a { color:var(--lav); }
-  .tabs { display:flex; gap:.5rem; margin-bottom:.6rem; }
-  .tabs button { background:var(--card); color:var(--muted); border:1px solid var(--line);
-                 border-radius:8px; padding:.4rem .9rem; font:inherit; font-size:.82rem; cursor:pointer; }
-  .tabs button.active { color:var(--bg); background:var(--lav); border-color:var(--lav); font-weight:bold; }
-  footer { margin-top:3rem; color:var(--muted); font-size:.78rem; text-align:center; }
+  :root { --paper:#f7f5ee; --card:#ffffff; --ink:#232136; --muted:#7a7690;
+          --line:#e6e2d5; --teal:#0e9f8a; --teal-d:#0b7d6d; --amber:#e8a13c;
+          --red:#e05d5d; --green:#1d9e6c; }
+  * { box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); margin:0;
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1180px; margin:0 auto; padding:2.2rem 1.2rem 4rem; }
+  header.hero { text-align:center; margin-bottom:1.6rem; }
+  header.hero h1 { font-size:2rem; margin:.2rem 0 .4rem; letter-spacing:-.02em; }
+  header.hero h1 .t { color:var(--teal); }
+  header.hero p { color:var(--muted); font-size:.95rem; margin:0; }
+  .steps { display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap; margin:1.4rem 0 2rem; }
+  .step { display:flex; align-items:center; gap:.45rem; background:var(--card);
+          border:1px solid var(--line); border-radius:999px; padding:.42rem .9rem;
+          font-size:.82rem; color:var(--muted); transition:all .3s ease; }
+  .step .n { width:22px; height:22px; border-radius:50%; background:var(--line);
+             display:flex; align-items:center; justify-content:center;
+             font-size:.72rem; font-weight:700; color:var(--muted); transition:all .3s ease; }
+  .step.active { border-color:var(--teal); color:var(--ink); box-shadow:0 2px 10px rgba(14,159,138,.15); }
+  .step.active .n { background:var(--teal); color:#fff; }
+  .step.done .n { background:var(--green); color:#fff; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start; }
+  @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:16px;
+           padding:1.2rem; box-shadow:0 2px 12px rgba(35,33,54,.05); }
+  .panel h2 { font-size:.85rem; text-transform:uppercase; letter-spacing:.08em;
+              color:var(--muted); margin:0 0 .8rem; }
+  textarea { width:100%; height:300px; border:1px solid var(--line); border-radius:12px;
+             padding:.9rem; font:inherit; font-size:.88rem; line-height:1.55; resize:vertical;
+             background:#fcfbf7; color:var(--ink); }
+  textarea:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(14,159,138,.12); }
+  .opts { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-top:.9rem; }
+  .seg { display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .seg button { border:none; background:transparent; padding:.5rem .9rem; font:inherit;
+                font-size:.82rem; color:var(--muted); cursor:pointer; }
+  .seg button.active { background:var(--ink); color:#fff; font-weight:600; }
+  label.chk { display:flex; align-items:center; gap:.35rem; font-size:.82rem; color:var(--muted);
+              cursor:pointer; }
+  button.go { background:var(--teal); color:#fff; border:none; border-radius:12px;
+              padding:.75rem 1.8rem; font:inherit; font-weight:700; font-size:1rem; cursor:pointer;
+              transition:transform .15s ease, background .15s ease; box-shadow:0 4px 14px rgba(14,159,138,.3); }
+  button.go:hover { background:var(--teal-d); }
+  button.go.pressed { transform:scale(.92); }
+  .scorecard { display:flex; align-items:center; gap:1rem; margin-bottom:.9rem; }
+  .grade { width:64px; height:64px; border-radius:18px; display:flex; align-items:center;
+           justify-content:center; font-size:1.7rem; font-weight:800; color:#fff; flex:none; }
+  .grade.A{background:var(--green)} .grade.B{background:#7ab648} .grade.C{background:var(--amber)}
+  .grade.D,.grade.F{background:var(--red)}
+  .finding { border-left:3px solid var(--amber); background:#fdf6e9; border-radius:0 10px 10px 0;
+             padding:.6rem .8rem; margin:.5rem 0; font-size:.84rem; }
+  .finding.high { border-color:var(--red); background:#fdeeee; }
+  .finding .fix { color:var(--teal-d); display:block; margin-top:.25rem; }
+  pre.out { background:#232136; color:#e8e4d8; border-radius:12px; padding:1rem;
+            font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+            font-size:.8rem; line-height:1.6; overflow:auto; white-space:pre-wrap;
+            max-height:420px; }
+  .kv { display:flex; gap:.5rem; flex-wrap:wrap; margin:.6rem 0; }
+  .pill { border-radius:999px; padding:.3rem .8rem; font-size:.78rem; font-weight:600; }
+  .pill.ok { background:#e2f4ec; color:#146c4e; } .pill.warn { background:#fdf0da; color:#9a6210; }
+  .pill.err { background:#fbe3e3; color:#a83a3a; }
+  button.dl { background:var(--ink); color:#fff; border:none; border-radius:10px;
+              padding:.6rem 1.2rem; font:inherit; font-size:.85rem; cursor:pointer; margin-top:.8rem; }
+  button.dl:hover { opacity:.85; }
+  .empty { color:var(--muted); text-align:center; padding:3rem 1rem; font-size:.9rem; }
+  .empty .big { font-size:2.2rem; display:block; margin-bottom:.6rem; }
+  footer { text-align:center; color:var(--muted); font-size:.78rem; margin-top:3rem; }
+  footer a { color:var(--teal-d); }
+  .repo-link { text-align:center; margin-top:1rem; font-size:.84rem; color:var(--muted); }
+  .repo-link a { color:var(--teal-d); font-weight:600; }
 
-  /* ---------- mascot: Gherky the robot ---------- */
+  /* ---------- Gherky (light-theme bubble) ---------- */
   #mascot { position:fixed; right:20px; bottom:20px; width:84px; z-index:60;
-            transition: transform .75s cubic-bezier(.34,1.3,.64,1); cursor:pointer; }
-  #mascot .bot { animation: bob 2.6s ease-in-out infinite; }
+            transition:transform .75s cubic-bezier(.34,1.3,.64,1); cursor:pointer; }
+  #mascot .bot { animation:bob 2.6s ease-in-out infinite; }
   @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
-  #mascot .antenna { width:5px; height:16px; background:var(--muted); margin:0 auto;
-                     border-radius:3px; position:relative; }
+  #mascot .antenna { width:5px; height:16px; background:#b9b4c9; margin:0 auto; border-radius:3px; position:relative; }
   #mascot .antenna::after { content:""; position:absolute; top:-7px; left:-3px; width:11px; height:11px;
-                            border-radius:50%; background:var(--amber); animation: glow 1.6s ease-in-out infinite; }
+                            border-radius:50%; background:var(--amber); animation:glow 1.6s ease-in-out infinite; }
   @keyframes glow { 0%,100%{opacity:.5} 50%{opacity:1} }
   #mascot .head { width:58px; height:46px; margin:0 auto; border-radius:16px;
-                  background:linear-gradient(160deg,#b79ffa,#7c5cd6); position:relative;
-                  box-shadow:0 4px 14px rgba(167,139,250,.35); }
+                  background:linear-gradient(160deg,#14b89f,#0b7d6d); position:relative;
+                  box-shadow:0 4px 14px rgba(14,159,138,.35); }
   #mascot .eye { position:absolute; top:15px; width:11px; height:13px; border-radius:50%;
-                 background:#14121f; animation: blink 4.2s infinite; }
-  #mascot .eye.left { left:14px; } #mascot .eye.right { right:14px; }
+                 background:#fff; animation:blink 4.2s infinite; }
+  #mascot .eye.left{left:14px} #mascot .eye.right{right:14px}
   @keyframes blink { 0%,93%,100%{transform:scaleY(1)} 96%{transform:scaleY(.08)} }
   #mascot .mouth { position:absolute; bottom:9px; left:50%; width:20px; height:8px;
-                   border:2.5px solid #14121f; border-top:none; border-radius:0 0 12px 12px;
+                   border:2.5px solid #fff; border-top:none; border-radius:0 0 12px 12px;
                    transform:translateX(-50%); }
   #mascot .body { width:64px; height:46px; margin:4px auto 0; border-radius:14px;
-                  background:linear-gradient(160deg,#2b2550,#1e1a33); border:1px solid var(--line);
-                  position:relative; }
+                  background:linear-gradient(160deg,#ffffff,#eceadf); border:1px solid var(--line); position:relative; }
   #mascot .chest { position:absolute; top:12px; left:50%; transform:translateX(-50%);
                    width:22px; height:22px; border-radius:50%; background:var(--amber);
-                   animation: glow 1.6s ease-in-out infinite; box-shadow:0 0 10px var(--amber); }
-  #mascot .arm { position:absolute; top:6px; width:11px; height:32px; border-radius:6px;
-                 background:#7c5cd6; }
-  #mascot .arm.left { left:-9px; transform-origin:top center; }
-  #mascot .arm.right { right:-9px; transform-origin:top center; }
-  #mascot.waving .arm.right { animation: wave .5s ease-in-out 3; }
-  @keyframes wave { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-55deg)} }
-  #mascot.pressing .body { animation: pressbod .3s ease; }
-  @keyframes pressbod { 50%{transform:scaleY(.88)} }
-  #mascot.jumping .bot { animation: jump .65s ease; }
-  @keyframes jump { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-34px) rotate(-6deg)}
-                    60%{transform:translateY(-34px) rotate(6deg)} }
-  #mascot .bubble { position:absolute; bottom:calc(100% + 10px); right:-6px; min-width:150px; max-width:210px;
-                    background:var(--card); border:1px solid var(--lav); border-radius:12px;
-                    padding:.55rem .7rem; font-size:.78rem; line-height:1.4; color:var(--txt);
+                   animation:glow 1.6s ease-in-out infinite; box-shadow:0 0 10px var(--amber); }
+  #mascot .arm { position:absolute; top:6px; width:11px; height:32px; border-radius:6px; background:#0e9f8a; }
+  #mascot .arm.left{left:-9px} #mascot .arm.right{right:-9px; transform-origin:top center;}
+  #mascot.waving .arm.right{ animation:wave .5s ease-in-out 3; }
+  @keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-55deg)}}
+  #mascot.pressing .body{ animation:pressbod .3s ease; }
+  @keyframes pressbod{50%{transform:scaleY(.88)}}
+  #mascot.jumping .bot{ animation:jump .65s ease; }
+  @keyframes jump{0%,100%{transform:translateY(0)}40%{transform:translateY(-34px) rotate(-6deg)}60%{transform:translateY(-34px) rotate(6deg)}}
+  #mascot .bubble { position:absolute; bottom:calc(100% + 10px); right:-6px; min-width:150px; max-width:215px;
+                    background:#fff; border:1px solid var(--line); border-radius:12px;
+                    box-shadow:0 6px 20px rgba(35,33,54,.12);
+                    padding:.55rem .7rem; font-size:.78rem; line-height:1.4; color:var(--ink);
                     opacity:0; transform:translateY(6px); transition:all .25s ease; pointer-events:none; }
-  #mascot .bubble::after { content:""; position:absolute; top:100%; right:26px;
-                           border:7px solid transparent; border-top-color:var(--lav); }
-  #mascot .bubble.show { opacity:1; transform:translateY(0); }
-  .confetti { position:fixed; top:-14px; width:9px; height:13px; z-index:99; border-radius:2px;
-              animation: fall 1.9s ease-in forwards; pointer-events:none; }
-  @keyframes fall { to { transform: translateY(108vh) rotate(720deg); } }
-  @media (max-width:600px){ #mascot{ width:64px; right:12px; bottom:12px; }
-    #mascot .bubble{ font-size:.68rem; min-width:120px; } }
+  #mascot .bubble::after{ content:""; position:absolute; top:100%; right:26px;
+                          border:7px solid transparent; border-top-color:#fff; }
+  #mascot .bubble.show{ opacity:1; transform:translateY(0); }
+  .confetti{ position:fixed; top:-14px; width:9px; height:13px; z-index:99; border-radius:2px;
+             animation:fall 1.9s ease-in forwards; pointer-events:none; }
+  @keyframes fall{ to{ transform:translateY(108vh) rotate(720deg);} }
+  @media (max-width:600px){ #mascot{width:64px; right:12px; bottom:12px;}
+    #mascot .bubble{font-size:.68rem; min-width:120px;} }
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<h1>🤖 AI Gherkin Generator
-  <span class="sub">Requirement in → test cases out. Runs 100% in your browser.</span>
-</h1>
+  <header class="hero">
+    <h1>🧪 Gherkin <span class="t">Lab</span></h1>
+    <p>Write a requirement. Get tested, executable test cases. Everything runs in your browser.</p>
+  </header>
 
-<textarea id="story" placeholder="Paste your user story here..."># User login
+  <div class="steps" id="steps">
+    <div class="step active" data-s="0"><span class="n">1</span> Write requirement</div>
+    <div class="step" data-s="1"><span class="n">2</span> Quality score</div>
+    <div class="step" data-s="2"><span class="n">3</span> Generate tests</div>
+    <div class="step" data-s="3"><span class="n">4</span> Export</div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>📝 Requirement</h2>
+      <textarea id="story"># User login
 
 As a registered user, I want to log in with my email and password,
 so that I can access my account securely.
 
 Acceptance Criteria:
 - When the user submits valid credentials, then they are taken to the dashboard
-- An error is shown for unregistered email addresses (admin, user, guest)
-</textarea>
+- An error is shown for unregistered email addresses (admin, user, guest)</textarea>
+      <div class="opts">
+        <div class="seg" id="fmtTabs">
+          <button data-fmt="gherkin" class="active">Gherkin</button>
+          <button data-fmt="json">JSON</button>
+          <button data-fmt="markdown">Markdown</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="wantQuality" checked> quality</label>
+        <label class="chk"><input type="checkbox" id="wantReport" checked> coverage</label>
+        <label class="chk"><input type="checkbox" id="wantLint" checked> lint</label>
+      </div>
+      <div class="opts">
+        <button class="go" id="go">Generate tests ✨</button>
+      </div>
+    </div>
 
-<div class="controls">
-  <div class="tabs" id="fmtTabs">
-    <button data-fmt="gherkin" class="active">Gherkin</button>
-    <button data-fmt="json">JSON</button>
-    <button data-fmt="markdown">Markdown</button>
+    <div class="panel" id="resultPanel">
+      <h2>🔬 Results</h2>
+      <div id="result">
+        <div class="empty"><span class="big">🧪</span>
+          Your quality score, scenarios and coverage will appear here.<br>
+          Gherky will do the clicking. 👉🤖
+        </div>
+      </div>
+    </div>
   </div>
-  <label class="chk"><input type="checkbox" id="wantReport" checked> coverage</label>
-  <label class="chk"><input type="checkbox" id="wantLint" checked> lint</label>
-  <label class="chk"><input type="checkbox" id="wantQuality" checked> quality</label>
-  <button class="go" id="go">Generate ✨</button>
+
+  <p class="repo-link">This demo runs the offline engine in your browser — no data leaves this page.
+    The full project (Azure OpenAI engine, CLI, headless execution) is on
+    <a href="https://github.com/dharshuadhi/ai-gherkin-generator">GitHub</a>.</p>
+  <footer>Built by Dharshini Adimoolam · MIT License</footer>
 </div>
-
-<div id="result" style="display:none">
-  <h2>Requirement quality</h2>
-  <pre id="quality"></pre>
-  <h2>Output</h2>
-  <pre id="output"></pre>
-  <button class="dl" id="dl">⬇ Download file</button>
-  <div id="reportWrap"><h2>Coverage</h2><pre id="report"></pre></div>
-  <div id="lintWrap"><h2>Lint</h2><pre id="lint"></pre></div>
-</div>
-
-<p class="hint">This demo runs the offline rule engine in your browser — no data leaves this page.
-The full project (Azure OpenAI engine, CLI, batch mode) is on
-<a href="https://github.com/dharshuadhi/ai-gherkin-generator">GitHub</a>.</p>
-
-<footer>Built by Dharshini Adimoolam · MIT License</footer>
 
 <div id="mascot" title="Gherky">
   <div class="bubble" id="bubble"></div>
@@ -160,8 +205,18 @@ The full project (Azure OpenAI engine, CLI, batch mode) is on
     };
   });
 
-  /* ---------- Gherky the robot ---------- */
-  const mascot = $("#mascot"), bubble = $("#bubble");
+  function setStep(n) {
+    document.querySelectorAll("#steps .step").forEach(el => {
+      const s = +el.dataset.s;
+      el.classList.toggle("active", s === n);
+      el.classList.toggle("done", s < n);
+      if (s < n) el.querySelector(".n").textContent = "✓";
+      else el.querySelector(".n").textContent = s + 1;
+    });
+  }
+
+  /* ---------- Gherky ---------- */
+  const mascot = $("mascot"), bubble = $("bubble");
   let bubbleTimer = null;
   function say(text, ms = 2600) {
     bubble.textContent = text;
@@ -184,7 +239,7 @@ The full project (Azure OpenAI engine, CLI, batch mode) is on
   function celebrate() {
     mascot.classList.add("jumping");
     setTimeout(() => mascot.classList.remove("jumping"), 700);
-    const colors = ["#a78bfa", "#f5c86e", "#7ee787", "#ff7b72", "#d6d0ea"];
+    const colors = ["#0e9f8a", "#e8a13c", "#1d9e6c", "#e05d5d", "#232136"];
     for (let i = 0; i < 26; i++) {
       const c = document.createElement("div");
       c.className = "confetti";
@@ -198,7 +253,7 @@ The full project (Azure OpenAI engine, CLI, batch mode) is on
   function goHome() { mascot.style.transform = ""; }
   const tips = [
     "Tip: value lists like (admin, user, guest) become Scenario Outlines! 🧬",
-    "Tip: turn on 'quality' to grade your requirement first! 🎯",
+    "Tip: keep 'quality' on — I'll grade your requirement first! 🎯",
     "Psst… I run 100% in your browser. No servers were harmed. 🤖",
     "Vague words like 'fast' make me sad. Give me numbers! 🔢",
   ];
@@ -207,58 +262,74 @@ The full project (Azure OpenAI engine, CLI, batch mode) is on
     setTimeout(() => mascot.classList.remove("waving"), 1600);
     say(tips[Math.floor(Math.random() * tips.length)]);
   });
-  setTimeout(() => say("Hi! I'm Gherky — click Generate and watch me work! 🤖", 4200), 800);
+  setTimeout(() => say("Hi! I'm Gherky — write a requirement, I'll handle the rest! 🤖", 4200), 800);
 
   /* ---------- generation ---------- */
+  function qualityCard(q) {
+    let h = `<div class="scorecard"><div class="grade ${q.grade}">${q.grade}</div>
+      <div><b>Requirement quality: ${q.score}/100</b><br>
+      <span style="color:var(--muted);font-size:.84rem">${q.findings.length} finding${q.findings.length === 1 ? "" : "s"}</span></div></div>`;
+    q.findings.forEach(f => {
+      h += `<div class="finding ${f.severity}"><b>[${f.severity}]</b> ${f.message}<span class="fix">→ ${f.suggestion}</span></div>`;
+    });
+    if (!q.findings.length) h += `<div class="kv"><span class="pill ok">✓ crisp, testable requirement</span></div>`;
+    return h;
+  }
+
   function doGenerate() {
     const story = $("story").value;
     const { out, feature } = generateFromText(story, fmt);
     lastOut = out;
     lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
-    $("output").textContent = out;
+    let h = "";
 
     let score = null;
     if ($("wantQuality").checked) {
       const q = analyzeQuality(parseStoryLite(story));
       score = q.score;
-      let qt = `Score: ${q.summary}\n`;
-      q.findings.forEach(f => { qt += `\n[${f.severity}] ${f.message}\n  → ${f.suggestion}\n`; });
-      if (!q.findings.length) qt += "✓ crisp, testable requirement";
-      $("quality").textContent = qt;
-      $("quality").className = q.score >= 75 ? "ok" : q.score >= 40 ? "warn" : "err";
+      h += qualityCard(q);
+      setStep(1);
     }
-
+    h += `<h2 style="margin-top:1.2rem">📄 Generated (${fmt})</h2><pre class="out"></pre>`;
+    h += `<div class="kv">`;
     if ($("wantReport").checked) {
       const c = analyzeCoverage(feature);
-      let rep = `Scenarios: ${c.total} (${c.positive} positive, ${c.negative} negative, ${c.outlines} outlines)\n`;
-      rep += c.warnings.length ? c.warnings.map(w => "⚠ " + w).join("\n") : "✓ solid coverage";
-      $("report").textContent = rep;
-      $("report").className = c.warnings.length ? "warn" : "ok";
-      $("reportWrap").style.display = "";
-    } else $("reportWrap").style.display = "none";
-
+      h += `<span class="pill ok">${c.total} scenarios</span>
+            <span class="pill ${c.negative ? "warn" : "ok"}">${c.negative} negative</span>
+            <span class="pill ${c.outlines ? "ok" : "warn"}">${c.outlines} outlines</span>`;
+      if (c.warnings.length) h += `<span class="pill warn">⚠ ${c.warnings.length} coverage note${c.warnings.length === 1 ? "" : "s"}</span>`;
+    }
     if ($("wantLint").checked) {
       const issues = lintGherkin(out);
-      $("lint").textContent = issues.length ? issues.map(i => "✗ " + i).join("\n") : "✓ clean";
-      $("lint").className = issues.length ? "err" : "ok";
-      $("lintWrap").style.display = "";
-    } else $("lintWrap").style.display = "none";
-
-    $("result").style.display = "";
-    $("result").scrollIntoView({ behavior: "smooth" });
+      h += issues.length ? `<span class="pill err">✗ ${issues.length} lint issue${issues.length === 1 ? "" : "s"}</span>`
+                         : `<span class="pill ok">✓ lint clean</span>`;
+    }
+    h += `</div><button class="dl" id="dl">⬇ Download .${lastExt}</button>`;
+    $("result").innerHTML = h;
+    $("result").querySelector("pre.out").textContent = out;
+    $("dl").onclick = () => {
+      const blob = new Blob([lastOut], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "generated." + lastExt;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setStep(3);
+    };
+    setStep(2);
     return { scenarios: feature.scenarios.length, score };
   }
 
   let busy = false;
   $("go").addEventListener("click", async () => {
     if (busy) return;
-    if (!$("story").value.trim()) { say("Paste a requirement first! 📝"); return; }
+    if (!$("story").value.trim()) { say("Write a requirement first! 📝"); setStep(0); return; }
     busy = true;
     try {
       say("On it! ✨");
       await walkTo($("go"));
       pressButton($("go"));
-      say("Generating…");
+      say("Scoring & generating…");
       await wait(450);
       const s = doGenerate();
       celebrate();
@@ -267,15 +338,6 @@ The full project (Azure OpenAI engine, CLI, batch mode) is on
       goHome();
     } finally { busy = false; }
   });
-
-  $("dl").onclick = () => {
-    const blob = new Blob([lastOut], { type: "text/plain" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "generated." + lastExt;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
 </script>
 </body>
 </html>
