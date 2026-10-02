@@ -73,6 +73,27 @@ def _post_process(text: str, feature: object | None, args, story: str = "") -> N
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(generate_stubs(feature, (args.output or "generated.feature")))
         print(f"Wrote {path} [pytest-bdd stubs]", file=sys.stderr)
+    if (args.execute or args.codegen) and feature is not None:
+        from src.actions import DEMO_TARGET, compile_feature
+        from src.codegen import generate_playwright
+        target = DEMO_TARGET  # --target demo is the bundled login app
+        compiled = compile_feature(feature, target)
+        runnable = sum(1 for c in compiled if not c.skipped)
+        print(f"Compiled {runnable}/{len(compiled)} scenarios to browser actions "
+              f"[{target['name']}]", file=sys.stderr)
+        if args.codegen:
+            with open(args.codegen, "w", encoding="utf-8") as fh:
+                fh.write(generate_playwright(compiled, target, feature.title))
+            print(f"Wrote {args.codegen} [runnable Playwright module]", file=sys.stderr)
+        if args.execute:
+            from src.runner import render_run_report, run_compiled
+            try:
+                reports = run_compiled(compiled, target)
+            except Exception as exc:  # noqa: BLE001 - e.g. target app not running
+                print(f"Execution failed: {exc}", file=sys.stderr)
+                print(f"Start the demo app first: python demo-app/app.py", file=sys.stderr)
+                return
+            print(render_run_report(reports), file=sys.stderr)
     if args.lint:
         issues = lint_gherkin(text)
         print("Lint: " + ("clean ✓" if not issues else f"{len(issues)} issue(s)"), file=sys.stderr)
@@ -144,6 +165,12 @@ def main() -> None:
                         help="Detect near-duplicate scenarios (TF-IDF similarity)")
     parser.add_argument("--stubs", nargs="?", const="test_stubs.py", metavar="FILE",
                         help="Generate pytest-bdd step-definition stubs")
+    parser.add_argument("--execute", action="store_true",
+                        help="Compile to browser actions and run headless with Playwright")
+    parser.add_argument("--codegen", metavar="FILE",
+                        help="Write a standalone runnable Playwright test module")
+    parser.add_argument("--target", default="demo",
+                        help="Execution target app config (default: demo login app)")
     args = parser.parse_args()
 
     engine = args.engine
