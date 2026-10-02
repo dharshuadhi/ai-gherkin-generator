@@ -3,392 +3,358 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>gherkin.compile() — requirement → test specification</title>
+<title>Gherkin Lab — Requirement → Executable Tests</title>
 <style>
-  :root{
-    --bg:#0b0e17; --bg2:#0e1220; --panel:#111624; --panel2:#0d1120;
-    --line:#1e2742; --line2:#2a3554;
-    --blue:#4d9fff; --cyan:#38e1c6; --violet:#a78bfa; --amber:#f5b544;
-    --green:#3ddc84; --red:#ff5f6b; --pink:#ff6b9d;
-    --ink:#dbe4f5; --mut:#7b88a8; --dim:#4a5578;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;background:var(--bg);color:var(--ink);
-    font-family:ui-monospace,'Cascadia Code','JetBrains Mono',Menlo,Consolas,monospace;
-    -webkit-font-smoothing:antialiased; min-height:100vh;
-  }
-  ::selection{background:rgba(77,159,255,.3)}
-  .wrap{max-width:1180px;margin:0 auto;padding:0 18px 60px}
+  :root { --paper:#f7f5ee; --card:#ffffff; --ink:#232136; --muted:#7a7690;
+          --line:#e6e2d5; --teal:#0e9f8a; --teal-d:#0b7d6d; --amber:#e8a13c;
+          --red:#e05d5d; --green:#1d9e6c; }
+  * { box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); margin:0;
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1180px; margin:0 auto; padding:2.2rem 1.2rem 4rem; }
+  header.hero { text-align:center; margin-bottom:1.6rem; }
+  header.hero h1 { font-size:2rem; margin:.2rem 0 .4rem; letter-spacing:-.02em; }
+  header.hero h1 .t { color:var(--teal); }
+  header.hero p { color:var(--muted); font-size:.95rem; margin:0; }
+  .steps { display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap; margin:1.4rem 0 2rem; }
+  .step { display:flex; align-items:center; gap:.45rem; background:var(--card);
+          border:1px solid var(--line); border-radius:999px; padding:.42rem .9rem;
+          font-size:.82rem; color:var(--muted); transition:all .3s ease; }
+  .step .n { width:22px; height:22px; border-radius:50%; background:var(--line);
+             display:flex; align-items:center; justify-content:center;
+             font-size:.72rem; font-weight:700; color:var(--muted); transition:all .3s ease; }
+  .step.active { border-color:var(--teal); color:var(--ink); box-shadow:0 2px 10px rgba(14,159,138,.15); }
+  .step.active .n { background:var(--teal); color:#fff; }
+  .step.done .n { background:var(--green); color:#fff; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start; }
+  @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:16px;
+           padding:1.2rem; box-shadow:0 2px 12px rgba(35,33,54,.05); }
+  .panel h2 { font-size:.85rem; text-transform:uppercase; letter-spacing:.08em;
+              color:var(--muted); margin:0 0 .8rem; }
+  textarea { width:100%; height:300px; border:1px solid var(--line); border-radius:12px;
+             padding:.9rem; font:inherit; font-size:.88rem; line-height:1.55; resize:vertical;
+             background:#fcfbf7; color:var(--ink); }
+  textarea:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(14,159,138,.12); }
+  .opts { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-top:.9rem; }
+  .seg { display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .seg button { border:none; background:transparent; padding:.5rem .9rem; font:inherit;
+                font-size:.82rem; color:var(--muted); cursor:pointer; }
+  .seg button.active { background:var(--ink); color:#fff; font-weight:600; }
+  label.chk { display:flex; align-items:center; gap:.35rem; font-size:.82rem; color:var(--muted);
+              cursor:pointer; }
+  button.go { background:var(--teal); color:#fff; border:none; border-radius:12px;
+              padding:.75rem 1.8rem; font:inherit; font-weight:700; font-size:1rem; cursor:pointer;
+              transition:transform .15s ease, background .15s ease; box-shadow:0 4px 14px rgba(14,159,138,.3); }
+  button.go:hover { background:var(--teal-d); }
+  button.go.pressed { transform:scale(.92); }
+  .scorecard { display:flex; align-items:center; gap:1rem; margin-bottom:.9rem; }
+  .grade { width:64px; height:64px; border-radius:18px; display:flex; align-items:center;
+           justify-content:center; font-size:1.7rem; font-weight:800; color:#fff; flex:none; }
+  .grade.A{background:var(--green)} .grade.B{background:#7ab648} .grade.C{background:var(--amber)}
+  .grade.D,.grade.F{background:var(--red)}
+  .finding { border-left:3px solid var(--amber); background:#fdf6e9; border-radius:0 10px 10px 0;
+             padding:.6rem .8rem; margin:.5rem 0; font-size:.84rem; }
+  .finding.high { border-color:var(--red); background:#fdeeee; }
+  .finding .fix { color:var(--teal-d); display:block; margin-top:.25rem; }
+  pre.out { background:#232136; color:#e8e4d8; border-radius:12px; padding:1rem;
+            font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+            font-size:.8rem; line-height:1.6; overflow:auto; white-space:pre-wrap;
+            max-height:420px; }
+  .kv { display:flex; gap:.5rem; flex-wrap:wrap; margin:.6rem 0; }
+  .pill { border-radius:999px; padding:.3rem .8rem; font-size:.78rem; font-weight:600; }
+  .pill.ok { background:#e2f4ec; color:#146c4e; } .pill.warn { background:#fdf0da; color:#9a6210; }
+  .pill.err { background:#fbe3e3; color:#a83a3a; }
+  button.dl { background:var(--ink); color:#fff; border:none; border-radius:10px;
+              padding:.6rem 1.2rem; font:inherit; font-size:.85rem; cursor:pointer; margin-top:.8rem; }
+  button.dl:hover { opacity:.85; }
+  .empty { color:var(--muted); text-align:center; padding:3rem 1rem; font-size:.9rem; }
+  .empty .big { font-size:2.2rem; display:block; margin-bottom:.6rem; }
+  footer { text-align:center; color:var(--muted); font-size:.78rem; margin-top:3rem; }
+  footer a { color:var(--teal-d); }
+  .repo-link { text-align:center; margin-top:1rem; font-size:.84rem; color:var(--muted); }
+  .repo-link a { color:var(--teal-d); font-weight:600; }
 
-  /* ===== top bar ===== */
-  .topbar{
-    display:flex;align-items:center;gap:14px;padding:14px 0;
-    border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,14,23,.92);
-    backdrop-filter:blur(8px);z-index:50;
-  }
-  .logo{font-weight:700;font-size:16px;letter-spacing:-.5px}
-  .logo .fn{color:var(--cyan)} .logo .par{color:var(--dim)}
-  .logo .str{color:var(--amber)}
-  .spacer{flex:1}
-  .badge{
-    font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 12px;border-radius:6px;
-    border:1px solid var(--line2);color:var(--mut);text-decoration:none;display:inline-flex;align-items:center;gap:7px;
-  }
-  .badge.live{border-color:#14532d;color:var(--green);background:rgba(61,220,132,.07)}
-  .badge.live i{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
-  @keyframes pulse{50%{opacity:.35}}
-
-  /* ===== hero strip ===== */
-  .hero{padding:34px 0 8px}
-  .hero h1{font-size:clamp(24px,4vw,38px);margin:0;letter-spacing:-1px;font-weight:700}
-  .hero h1 .c{color:var(--cyan)} .hero h1 .v{color:var(--violet)}
-  .hero p{color:var(--mut);font-size:14px;max-width:640px;line-height:1.7;margin:10px 0 0}
-  .hero p code{color:var(--cyan);background:var(--panel);padding:2px 7px;border-radius:5px;border:1px solid var(--line)}
-
-  /* ===== pipeline ===== */
-  .pipe{display:flex;align-items:stretch;gap:0;margin:26px 0;overflow-x:auto;padding-bottom:4px}
-  .stage{
-    flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);
-    padding:14px 12px;position:relative;transition:.3s;
-  }
-  .stage:first-child{border-radius:12px 0 0 12px}
-  .stage:last-child{border-radius:0 12px 12px 0}
-  .stage + .stage{border-left:none}
-  .stage .n{font-size:10px;color:var(--dim);letter-spacing:2px}
-  .stage .t{font-size:14px;font-weight:700;margin:4px 0 2px}
-  .stage .d{font-size:11px;color:var(--mut);line-height:1.5}
-  .stage .st{position:absolute;top:12px;right:12px;font-size:13px}
-  .stage.run{border-color:var(--blue);box-shadow:inset 0 0 24px rgba(77,159,255,.12)}
-  .stage.run .st{color:var(--blue);animation:spin 1s linear infinite}
-  .stage.done{border-color:#14532d}
-  .stage.done .st{color:var(--green)}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .pipe-arrow{align-self:center;color:var(--dim);padding:0 6px;font-size:18px;flex:0 0 auto}
-
-  /* ===== main grid ===== */
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media(max-width:900px){.grid{grid-template-columns:1fr}}
-
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .p-head{
-    display:flex;align-items:center;gap:10px;padding:11px 16px;
-    border-bottom:1px solid var(--line);background:var(--panel2);font-size:12px;
-  }
-  .p-head .dots{display:flex;gap:6px}
-  .p-head .dots i{width:11px;height:11px;border-radius:50%}
-  .p-head .fname{color:var(--mut)}
-  .p-head .fname b{color:var(--ink);font-weight:600}
-  .p-head .right{margin-left:auto;display:flex;gap:8px;align-items:center}
-
-  /* editor */
-  .ed{display:flex;min-height:300px}
-  .ln{
-    padding:14px 10px 14px 16px;text-align:right;color:var(--dim);font-size:13px;line-height:1.7;
-    border-right:1px solid var(--line);user-select:none;min-width:44px;
-  }
-  textarea#story{
-    flex:1;background:transparent;border:none;outline:none;resize:vertical;
-    color:var(--ink);font:inherit;font-size:13px;line-height:1.7;padding:14px;min-height:300px;
-  }
-  textarea#story::placeholder{color:var(--dim)}
-
-  .controls{padding:14px 16px;border-top:1px solid var(--line);background:var(--panel2)}
-  .fmt-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-  .fmt{
-    font:inherit;font-size:12px;padding:8px 14px;border-radius:8px;cursor:pointer;
-    background:var(--bg2);border:1px solid var(--line2);color:var(--mut);transition:.15s;
-  }
-  .fmt:hover{color:var(--ink);border-color:var(--blue)}
-  .fmt.active{background:rgba(77,159,255,.14);border-color:var(--blue);color:var(--blue)}
-  .opt-row{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-bottom:14px}
-  .opt-row label{display:flex;align-items:center;gap:7px;cursor:pointer}
-  .opt-row input{accent-color:var(--blue);width:15px;height:15px}
-  .compile-btn{
-    width:100%;font:inherit;font-weight:700;font-size:15px;letter-spacing:.5px;
-    padding:14px;border:none;border-radius:10px;cursor:pointer;
-    background:linear-gradient(135deg,#2f7de1,#4d9fff);color:#fff;
-    box-shadow:0 4px 20px rgba(77,159,255,.35);transition:.15s;
-  }
-  .compile-btn:hover{filter:brightness(1.1)}
-  .compile-btn:active{transform:translateY(2px)}
-  .compile-btn:disabled{opacity:.5;cursor:wait}
-
-  /* terminal */
-  .term{
-    background:#070a13;border-top:1px solid var(--line);padding:14px 16px;
-    font-size:12px;line-height:2;min-height:150px;max-height:210px;overflow-y:auto;
-  }
-  .term .t{color:var(--dim)} .term .ok{color:var(--green)} .term .inf{color:var(--blue)}
-  .term .warn{color:var(--amber)} .term .err{color:var(--red)} .term .hl{color:var(--cyan)}
-
-  /* output */
-  .tabs{display:flex;gap:2px;padding:10px 12px 0;background:var(--panel2);border-bottom:1px solid var(--line)}
-  .tab{
-    font:inherit;font-size:12px;padding:9px 16px;border:none;background:transparent;color:var(--mut);
-    cursor:pointer;border-bottom:2px solid transparent;
-  }
-  .tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
-  .out-wrap{position:relative}
-  pre.out{
-    margin:0;padding:16px;font-size:12.5px;line-height:1.75;max-height:440px;overflow:auto;
-    white-space:pre-wrap;word-break:break-word;
-  }
-  .copy{
-    position:absolute;top:10px;right:12px;font:inherit;font-size:11px;padding:6px 12px;border-radius:7px;
-    background:var(--bg2);border:1px solid var(--line2);color:var(--mut);cursor:pointer;
-  }
-  .copy:hover{color:var(--cyan);border-color:var(--cyan)}
-  .dl-row{padding:12px 16px;border-top:1px solid var(--line);background:var(--panel2);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .dl-btn{
-    font:inherit;font-size:13px;font-weight:700;padding:10px 20px;border-radius:9px;cursor:pointer;
-    background:rgba(61,220,132,.12);border:1px solid #14532d;color:var(--green);
-  }
-  .dl-btn:hover{background:rgba(61,220,132,.22)}
-  .meta{font-size:11px;color:var(--dim)}
-
-  /* quality gates */
-  .gates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
-  @media(max-width:700px){.gates{grid-template-columns:1fr}}
-  .gate{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
-  .gate h4{margin:0 0 8px;font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:700}
-  .gate .big{font-size:30px;font-weight:700}
-  .gate .bar{height:7px;background:var(--bg2);border-radius:99px;margin:10px 0;overflow:hidden}
-  .gate .bar i{display:block;height:100%;border-radius:99px;transition:width .8s}
-  .gate ul{margin:8px 0 0;padding:0;list-style:none;font-size:11.5px;line-height:1.9;color:var(--mut)}
-  .gate ul b{font-weight:700}
-  .pass{color:var(--green)} .fail{color:var(--red)} .warn2{color:var(--amber)}
-
-  .empty{padding:50px 20px;text-align:center;color:var(--dim);font-size:13px}
-  .empty .big{font-size:34px;display:block;margin-bottom:10px;opacity:.5}
-
-  footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
-  footer a{color:var(--blue);text-decoration:none}
-  .reveal{opacity:0;transform:translateY(18px);transition:.55s}
-  .reveal.in{opacity:1;transform:none}
+  /* ---------- Gherky (light-theme bubble) ---------- */
+  #mascot { position:fixed; right:20px; bottom:20px; width:84px; z-index:60;
+            transition:transform .75s cubic-bezier(.34,1.3,.64,1); cursor:pointer; }
+  #mascot .bot { animation:bob 2.6s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+  #mascot .antenna { width:5px; height:16px; background:#b9b4c9; margin:0 auto; border-radius:3px; position:relative; }
+  #mascot .antenna::after { content:""; position:absolute; top:-7px; left:-3px; width:11px; height:11px;
+                            border-radius:50%; background:var(--amber); animation:glow 1.6s ease-in-out infinite; }
+  @keyframes glow { 0%,100%{opacity:.5} 50%{opacity:1} }
+  #mascot .head { width:58px; height:46px; margin:0 auto; border-radius:16px;
+                  background:linear-gradient(160deg,#14b89f,#0b7d6d); position:relative;
+                  box-shadow:0 4px 14px rgba(14,159,138,.35); }
+  #mascot .eye { position:absolute; top:15px; width:11px; height:13px; border-radius:50%;
+                 background:#fff; animation:blink 4.2s infinite; }
+  #mascot .eye.left{left:14px} #mascot .eye.right{right:14px}
+  @keyframes blink { 0%,93%,100%{transform:scaleY(1)} 96%{transform:scaleY(.08)} }
+  #mascot .mouth { position:absolute; bottom:9px; left:50%; width:20px; height:8px;
+                   border:2.5px solid #fff; border-top:none; border-radius:0 0 12px 12px;
+                   transform:translateX(-50%); }
+  #mascot .body { width:64px; height:46px; margin:4px auto 0; border-radius:14px;
+                  background:linear-gradient(160deg,#ffffff,#eceadf); border:1px solid var(--line); position:relative; }
+  #mascot .chest { position:absolute; top:12px; left:50%; transform:translateX(-50%);
+                   width:22px; height:22px; border-radius:50%; background:var(--amber);
+                   animation:glow 1.6s ease-in-out infinite; box-shadow:0 0 10px var(--amber); }
+  #mascot .arm { position:absolute; top:6px; width:11px; height:32px; border-radius:6px; background:#0e9f8a; }
+  #mascot .arm.left{left:-9px} #mascot .arm.right{right:-9px; transform-origin:top center;}
+  #mascot.waving .arm.right{ animation:wave .5s ease-in-out 3; }
+  @keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-55deg)}}
+  #mascot.pressing .body{ animation:pressbod .3s ease; }
+  @keyframes pressbod{50%{transform:scaleY(.88)}}
+  #mascot.jumping .bot{ animation:jump .65s ease; }
+  @keyframes jump{0%,100%{transform:translateY(0)}40%{transform:translateY(-34px) rotate(-6deg)}60%{transform:translateY(-34px) rotate(6deg)}}
+  #mascot .bubble { position:absolute; bottom:calc(100% + 10px); right:-6px; min-width:150px; max-width:215px;
+                    background:#fff; border:1px solid var(--line); border-radius:12px;
+                    box-shadow:0 6px 20px rgba(35,33,54,.12);
+                    padding:.55rem .7rem; font-size:.78rem; line-height:1.4; color:var(--ink);
+                    opacity:0; transform:translateY(6px); transition:all .25s ease; pointer-events:none; }
+  #mascot .bubble::after{ content:""; position:absolute; top:100%; right:26px;
+                          border:7px solid transparent; border-top-color:#fff; }
+  #mascot .bubble.show{ opacity:1; transform:translateY(0); }
+  .confetti{ position:fixed; top:-14px; width:9px; height:13px; z-index:99; border-radius:2px;
+             animation:fall 1.9s ease-in forwards; pointer-events:none; }
+  @keyframes fall{ to{ transform:translateY(108vh) rotate(720deg);} }
+  @media (max-width:600px){ #mascot{width:64px; right:12px; bottom:12px;}
+    #mascot .bubble{font-size:.68rem; min-width:120px;} }
 </style>
 </head>
 <body>
-
-<div class="topbar">
-  <div class="wrap" style="display:flex;align-items:center;gap:14px;padding-bottom:0;width:100%">
-    <div class="logo"><span class="fn">gherkin</span><span class="par">.</span><span class="fn">compile</span><span class="par">(</span><span class="str">"requirement.txt"</span><span class="par">)</span></div>
-    <div class="spacer"></div>
-    <span class="badge live"><i></i>ENGINE v4 · ONLINE</span>
-    <a class="badge" href="https://github.com/dharshuadhi/ai-gherkin-generator" target="_blank" rel="noopener">↗ src</a>
-  </div>
-</div>
-
 <div class="wrap">
-  <div class="hero reveal in">
-    <h1>requirement <span class="c">→</span> <span class="v">specification</span></h1>
-    <p>A zero-dependency rule engine that lexes plain-English requirements and emits structured <code>.feature</code> files — plus JSON, Markdown, pytest-bdd stubs and Page Objects. 32 unit tests. Works fully offline.</p>
-  </div>
 
-  <!-- PIPELINE -->
-  <div class="pipe reveal in" id="pipe">
-    <div class="stage" data-s="0"><span class="st">○</span><div class="n">STAGE 01</div><div class="t">LEX</div><div class="d">Tokenize story, roles &amp; bullets</div></div><div class="pipe-arrow">→</div>
-    <div class="stage" data-s="1"><span class="st">○</span><div class="n">STAGE 02</div><div class="t">PARSE</div><div class="d">Build scenario AST</div></div><div class="pipe-arrow">→</div>
-    <div class="stage" data-s="2"><span class="st">○</span><div class="n">STAGE 03</div><div class="t">GENERATE</div><div class="d">Emit Gherkin / JSON / POM</div></div><div class="pipe-arrow">→</div>
-    <div class="stage" data-s="3"><span class="st">○</span><div class="n">STAGE 04</div><div class="t">ANALYZE</div><div class="d">Quality · lint · coverage</div></div><div class="pipe-arrow">→</div>
-    <div class="stage" data-s="4"><span class="st">○</span><div class="n">STAGE 05</div><div class="t">EMIT</div><div class="d">Artifact download</div></div>
+  <header class="hero">
+    <h1>🧪 Gherkin <span class="t">Lab</span></h1>
+    <p>Write a requirement. Get tested, executable test cases. Everything runs in your browser.</p>
+  </header>
+
+  <div class="steps" id="steps">
+    <div class="step active" data-s="0"><span class="n">1</span> Write requirement</div>
+    <div class="step" data-s="1"><span class="n">2</span> Quality score</div>
+    <div class="step" data-s="2"><span class="n">3</span> Generate tests</div>
+    <div class="step" data-s="3"><span class="n">4</span> Export</div>
   </div>
 
   <div class="grid">
-    <!-- INPUT -->
-    <div class="panel reveal in">
-      <div class="p-head"><div class="dots"><i style="background:#ff5f6b"></i><i style="background:#f5b544"></i><i style="background:#3ddc84"></i></div><div class="fname"><b>requirement.txt</b> — plain text in</div></div>
-      <div class="ed">
-        <div class="ln" id="ln">1</div>
-        <textarea id="story" spellcheck="false" placeholder="As a shopper, I want to add items to my cart, so that I can checkout later.
+    <div class="panel">
+      <h2>📝 Requirement</h2>
+      <textarea id="story"># User login
 
-Acceptance criteria:
-- When I click add to cart then the cart badge shows 1
-- When I add two items then the total is correct"></textarea>
-      </div>
-      <div class="controls">
-        <div class="fmt-row" id="fmtTabs">
-          <button class="fmt active" data-fmt="gherkin">.feature</button>
-          <button class="fmt" data-fmt="json">.json</button>
-          <button class="fmt" data-fmt="markdown">.md</button>
-          <button class="fmt" data-fmt="pom">.py (POM)</button>
+As a registered user, I want to log in with my email and password,
+so that I can access my account securely.
+
+Acceptance Criteria:
+- When the user submits valid credentials, then they are taken to the dashboard
+- An error is shown for unregistered email addresses (admin, user, guest)</textarea>
+      <div class="opts">
+        <div class="seg" id="fmtTabs">
+          <button data-fmt="gherkin" class="active">Gherkin</button>
+          <button data-fmt="json">JSON</button>
+          <button data-fmt="markdown">Markdown</button>
+          <button data-fmt="pom">Page Objects</button>
         </div>
-        <div class="opt-row">
-          <label><input type="checkbox" id="wantQuality" checked> quality gate</label>
-          <label><input type="checkbox" id="wantLint" checked> lint</label>
-          <label><input type="checkbox" id="wantReport" checked> coverage</label>
-        </div>
-        <button class="compile-btn" id="compileBtn" onclick="compile()">▶ COMPILE</button>
+        <label class="chk"><input type="checkbox" id="wantQuality" checked> quality</label>
+        <label class="chk"><input type="checkbox" id="wantReport" checked> coverage</label>
+        <label class="chk"><input type="checkbox" id="wantLint" checked> lint</label>
       </div>
-      <div class="term" id="term"><div class="t">$ awaiting input_</div></div>
+      <div class="opts">
+        <button class="go" id="go">Generate tests ✨</button>
+      </div>
     </div>
 
-    <!-- OUTPUT -->
-    <div class="panel reveal in">
-      <div class="p-head"><div class="dots"><i style="background:#ff5f6b"></i><i style="background:#f5b544"></i><i style="background:#3ddc84"></i></div><div class="fname"><b id="outName">output</b> — generated</div><div class="right"><span class="meta" id="outMeta"></span></div></div>
-      <div id="result"><div class="empty"><span class="big">▚</span>no artifact yet — hit COMPILE</div></div>
+    <div class="panel" id="resultPanel">
+      <h2>🔬 Results</h2>
+      <div id="result">
+        <div class="empty"><span class="big">🧪</span>
+          Your quality score, scenarios and coverage will appear here.<br>
+          Gherky will do the clicking. 👉🤖
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- QUALITY GATES -->
-  <div class="gates" id="gates" style="display:none">
-    <div class="gate"><h4>QUALITY SCORE</h4><div class="big" id="gScore">—</div><div class="bar"><i id="gBar"></i></div><ul id="gFind"></ul></div>
-    <div class="gate"><h4>LINT</h4><div class="big" id="lScore">—</div><ul id="lFind"></ul></div>
-    <div class="gate"><h4>COVERAGE</h4><div class="big" id="cScore">—</div><ul id="cFind"></ul></div>
-  </div>
+  <p class="repo-link">This demo runs the offline engine in your browser — no data leaves this page.
+    The full project (Azure OpenAI engine, CLI, headless execution) is on
+    <a href="https://github.com/dharshuadhi/ai-gherkin-generator">GitHub</a>.</p>
+  <footer>Built by Dharshini Adimoolam · MIT License</footer>
+</div>
 
-  <footer>
-    <span>built by <a href="https://github.com/dharshuadhi">Dharshini Adimoolam</a></span>
-    <span><a href="https://github.com/dharshuadhi/ai-gherkin-generator">repo</a> · rule engine · 32 tests · offline-first</span>
-  </footer>
+<div id="mascot" title="Gherky">
+  <div class="bubble" id="bubble"></div>
+  <div class="bot">
+    <div class="antenna"></div>
+    <div class="head"><div class="eye left"></div><div class="eye right"></div><div class="mouth"></div></div>
+    <div class="body"><div class="arm left"></div><div class="arm right"></div><div class="chest"></div></div>
+  </div>
 </div>
 
 <script src="engine.js"></script>
 <script src="quality.js"></script>
 <script src="pom.js"></script>
 <script>
+  let fmt = "gherkin", lastOut = "", lastExt = "feature";
   const $ = id => document.getElementById(id);
   const wait = ms => new Promise(r => setTimeout(r, ms));
-  let fmt = "gherkin", lastOut = "", lastExt = "feature";
 
-  /* line numbers */
-  const ta = $("story"), ln = $("ln");
-  ta.addEventListener("input", () => {
-    const n = ta.value.split("\n").length;
-    ln.innerHTML = Array.from({length: n}, (_, i) => i + 1).join("<br>");
+  document.querySelectorAll("#fmtTabs button").forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll("#fmtTabs button").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      fmt = b.dataset.fmt;
+    };
   });
 
-  /* format tabs */
-  document.querySelectorAll(".fmt").forEach(t => t.addEventListener("click", () => {
-    document.querySelectorAll(".fmt").forEach(x => x.classList.remove("active"));
-    t.classList.add("active"); fmt = t.dataset.fmt;
-  }));
-
-  /* terminal */
-  function tlog(html) {
-    const t = $("term");
-    t.insertAdjacentHTML("beforeend", "<div>" + html + "</div>");
-    t.scrollTop = t.scrollHeight;
-  }
-  function tclear() { $("term").innerHTML = ""; }
-
-  /* pipeline stages */
-  function stage(i, state) {
-    const el = document.querySelector(`.stage[data-s="${i}"]`);
-    el.classList.remove("run", "done");
-    el.querySelector(".st").textContent = "○";
-    if (state === "run") { el.classList.add("run"); el.querySelector(".st").textContent = "◌"; }
-    if (state === "done") { el.classList.add("done"); el.querySelector(".st").textContent = "●"; }
-  }
-  function resetPipe() { for (let i = 0; i < 5; i++) stage(i, null); }
-
-  /* minimal gherkin syntax highlight */
-  function hl(src) {
-    return src.replace(/&/g, "&amp;").replace(/</g, "&lt;")
-      .replace(/^(\s*)(Feature:|Scenario:|Scenario Outline:|Examples:|Background:)(.*)$/gm,
-        '$1<span style="color:#a78bfa;font-weight:700">$2</span>$3')
-      .replace(/^(\s*)(Given|When|Then|And|But)(\s)/gm,
-        '$1<span style="color:#4d9fff;font-weight:700">$2</span>$3')
-      .replace(/^(\s*)(#.*)$/gm, '$1<span style="color:#4a5578">$2</span>')
-      .replace(/("[^"]*")/g, '<span style="color:#f5b544">$1</span>');
+  function setStep(n) {
+    document.querySelectorAll("#steps .step").forEach(el => {
+      const s = +el.dataset.s;
+      el.classList.toggle("active", s === n);
+      el.classList.toggle("done", s < n);
+      if (s < n) el.querySelector(".n").textContent = "✓";
+      else el.querySelector(".n").textContent = s + 1;
+    });
   }
 
-  function renderGates(q, lintIssues, cov) {
-    $("gates").style.display = "grid";
-    if (q) {
-      $("gScore").innerHTML = q.score + '<span style="font-size:14px;color:var(--dim)">/100</span>';
-      $("gScore").style.color = q.score >= 70 ? "var(--green)" : q.score >= 40 ? "var(--amber)" : "var(--red)";
-      const bar = $("gBar");
-      bar.style.width = q.score + "%";
-      bar.style.background = q.score >= 70 ? "var(--green)" : q.score >= 40 ? "var(--amber)" : "var(--red)";
-      $("gFind").innerHTML = q.findings.length
-        ? q.findings.slice(0, 4).map(f => `<li><b class="${f.severity === "critical" ? "fail" : "warn2"}">[${f.severity}]</b> ${f.message}</li>`).join("")
-        : `<li><b class="pass">✓</b> no findings — clean spec</li>`;
-    } else { $("gScore").textContent = "—"; $("gFind").innerHTML = `<li>gate disabled</li>`; }
-    if (lintIssues) {
-      $("lScore").innerHTML = lintIssues.length ? `<span class="fail">${lintIssues.length} issues</span>` : `<span class="pass">✓ clean</span>`;
-      $("lFind").innerHTML = lintIssues.length
-        ? lintIssues.slice(0, 4).map(i => `<li><b class="fail">✗</b> ${i.message || i}</li>`).join("")
-        : `<li><b class="pass">✓</b> style checks passed</li>`;
-    } else { $("lScore").textContent = "—"; $("lFind").innerHTML = `<li>gate disabled</li>`; }
-    if (cov) {
-      $("cScore").innerHTML = cov.total + '<span style="font-size:14px;color:var(--dim)"> scenarios</span>';
-      $("cFind").innerHTML =
-        `<li>negative paths: <b class="${cov.negative ? "pass" : "warn2"}">${cov.negative}</b></li>` +
-        `<li>outlines: <b class="${cov.outlines ? "pass" : "warn2"}">${cov.outlines}</b></li>` +
-        (cov.warnings.length ? cov.warnings.slice(0, 2).map(w => `<li><b class="warn2">⚠</b> ${w}</li>`).join("") : `<li><b class="pass">✓</b> no coverage gaps</li>`);
-    } else { $("cScore").textContent = "—"; $("cFind").innerHTML = `<li>gate disabled</li>`; }
+  /* ---------- Gherky ---------- */
+  const mascot = $("mascot"), bubble = $("bubble");
+  let bubbleTimer = null;
+  function say(text, ms = 2600) {
+    bubble.textContent = text;
+    bubble.classList.add("show");
+    clearTimeout(bubbleTimer);
+    if (ms) bubbleTimer = setTimeout(() => bubble.classList.remove("show"), ms);
+  }
+  async function walkTo(el) {
+    const m = mascot.getBoundingClientRect(), b = el.getBoundingClientRect();
+    const dx = (b.left + b.width / 2 - 30) - (m.left + m.width / 2);
+    const dy = (b.top - 110) - m.top;
+    mascot.style.transform = `translate(${dx}px, ${dy}px)`;
+    await wait(800);
+  }
+  function pressButton(el) {
+    mascot.classList.add("pressing");
+    el.classList.add("pressed");
+    setTimeout(() => { mascot.classList.remove("pressing"); el.classList.remove("pressed"); }, 320);
+  }
+  function celebrate() {
+    mascot.classList.add("jumping");
+    setTimeout(() => mascot.classList.remove("jumping"), 700);
+    const colors = ["#0e9f8a", "#e8a13c", "#1d9e6c", "#e05d5d", "#232136"];
+    for (let i = 0; i < 26; i++) {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = (38 + Math.random() * 24) + "vw";
+      c.style.background = colors[i % colors.length];
+      c.style.animationDelay = (Math.random() * 0.35) + "s";
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 2400);
+    }
+  }
+  function goHome() { mascot.style.transform = ""; }
+  const tips = [
+    "Tip: value lists like (admin, user, guest) become Scenario Outlines! 🧬",
+    "Tip: keep 'quality' on — I'll grade your requirement first! 🎯",
+    "Psst… I run 100% in your browser. No servers were harmed. 🤖",
+    "Vague words like 'fast' make me sad. Give me numbers! 🔢",
+  ];
+  mascot.addEventListener("click", () => {
+    mascot.classList.add("waving");
+    setTimeout(() => mascot.classList.remove("waving"), 1600);
+    say(tips[Math.floor(Math.random() * tips.length)]);
+  });
+  setTimeout(() => say("Hi! I'm Gherky — write a requirement, I'll handle the rest! 🤖", 4200), 800);
+
+  /* ---------- generation ---------- */
+  function qualityCard(q) {
+    let h = `<div class="scorecard"><div class="grade ${q.grade}">${q.grade}</div>
+      <div><b>Requirement quality: ${q.score}/100</b><br>
+      <span style="color:var(--muted);font-size:.84rem">${q.findings.length} finding${q.findings.length === 1 ? "" : "s"}</span></div></div>`;
+    q.findings.forEach(f => {
+      h += `<div class="finding ${f.severity}"><b>[${f.severity}]</b> ${f.message}<span class="fix">→ ${f.suggestion}</span></div>`;
+    });
+    if (!q.findings.length) h += `<div class="kv"><span class="pill ok">✓ crisp, testable requirement</span></div>`;
+    return h;
+  }
+
+  function doGenerate() {
+    const story = $("story").value;
+    const isPOM = fmt === "pom";
+    const { out, feature } = generateFromText(story, "gherkin");
+    let pomSummary = null;
+    if (isPOM) {
+      const r = generatePOMPreview(feature);
+      lastOut = r.code; lastExt = "py";
+      pomSummary = r;
+    } else {
+      const g = generateFromText(story, fmt);
+      lastOut = g.out;
+      lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
+    }
+    let h = "";
+
+    let score = null;
+    if ($("wantQuality").checked) {
+      const q = analyzeQuality(parseStoryLite(story));
+      score = q.score;
+      h += qualityCard(q);
+      setStep(1);
+    }
+    const fmtLabel = isPOM ? "Page Objects (Python)" : fmt;
+    h += `<h2 style="margin-top:1.2rem">📄 Generated (${fmtLabel})</h2>`;
+    if (isPOM && pomSummary) {
+      h += `<div class="kv"><span class="pill ok">${pomSummary.pages} page classes</span>`
+         + `<span class="pill ok">${pomSummary.tests} tests</span>`
+         + `<span class="pill warn">XPath locators</span></div>`;
+    }
+    h += `<pre class="out"></pre><div class="kv">`;
+    if (!isPOM && $("wantReport").checked) {
+      const c = analyzeCoverage(feature);
+      h += `<span class="pill ok">${c.total} scenarios</span>
+            <span class="pill ${c.negative ? "warn" : "ok"}">${c.negative} negative</span>
+            <span class="pill ${c.outlines ? "ok" : "warn"}">${c.outlines} outlines</span>`;
+      if (c.warnings.length) h += `<span class="pill warn">⚠ ${c.warnings.length} coverage note${c.warnings.length === 1 ? "" : "s"}</span>`;
+    }
+    if (!isPOM && $("wantLint").checked) {
+      const issues = lintGherkin(lastOut);
+      h += issues.length ? `<span class="pill err">✗ ${issues.length} lint issue${issues.length === 1 ? "" : "s"}</span>`
+                         : `<span class="pill ok">✓ lint clean</span>`;
+    }
+    h += `</div><button class="dl" id="dl">⬇ Download .${lastExt}</button>`;
+    $("result").innerHTML = h;
+    $("result").querySelector("pre.out").textContent = lastOut;
+    $("dl").onclick = () => {
+      const blob = new Blob([lastOut], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "generated." + lastExt;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setStep(3);
+    };
+    setStep(2);
+    return { scenarios: isPOM && pomSummary ? pomSummary.tests : feature.scenarios.length, score };
   }
 
   let busy = false;
-  async function compile() {
+  $("go").addEventListener("click", async () => {
     if (busy) return;
-    const story = ta.value.trim();
-    if (!story) { tclear(); tlog('<span class="err">✗ error:</span> empty input — nothing to compile'); return; }
+    if (!$("story").value.trim()) { say("Write a requirement first! 📝"); setStep(0); return; }
     busy = true;
-    const btn = $("compileBtn"); btn.disabled = true; btn.textContent = "◌ COMPILING…";
-    tclear(); resetPipe();
     try {
-      stage(0, "run"); tlog('<span class="t">[lex]</span> tokenizing input…');
+      say("On it! ✨");
+      await walkTo($("go"));
+      pressButton($("go"));
+      say("Scoring & generating…");
       await wait(450);
-      const { feature } = generateFromText(story, "gherkin");
-      tlog(`<span class="ok">✓</span> <span class="hl">${feature.scenarios.length} scenario blocks</span> <span class="t">· ${feature.title || "untitled"}</span>`);
-      stage(0, "done"); stage(1, "run"); tlog('<span class="t">[parse]</span> building AST…');
-      await wait(450);
-      stage(1, "done"); stage(2, "run"); tlog(`<span class="t">[generate]</span> emitting <span class="hl">${fmt}</span>…`);
-      await wait(450);
-
-      const isPOM = fmt === "pom";
-      let pomSummary = null;
-      if (isPOM) {
-        const r = generatePOMPreview(feature);
-        lastOut = r.code; lastExt = "py"; pomSummary = r;
-        tlog(`<span class="ok">✓</span> ${r.pages} page classes · ${r.tests} tests`);
-      } else {
-        const g = generateFromText(story, fmt);
-        lastOut = g.out;
-        lastExt = fmt === "json" ? "json" : fmt === "markdown" ? "md" : "feature";
-        tlog(`<span class="ok">✓</span> <span class="hl">${lastOut.length} bytes</span> <span class="t">emitted</span>`);
-      }
-      stage(2, "done"); stage(3, "run"); tlog('<span class="t">[analyze]</span> running gates…');
-      await wait(450);
-
-      let q = null, lintIssues = null, cov = null;
-      if ($("wantQuality").checked && !isPOM) { q = analyzeQuality(parseStoryLite(story)); }
-      if ($("wantLint").checked && !isPOM) { lintIssues = lintGherkin(lastOut); }
-      if ($("wantReport").checked && !isPOM) { cov = analyzeCoverage(feature); }
-      if (q) tlog(`<span class="${q.score >= 70 ? 'ok' : 'warn'}">◉ quality:</span> ${q.score}/100 <span class="t">(${q.findings.length} findings)</span>`);
-      if (lintIssues) tlog(lintIssues.length ? `<span class="err">✗ lint:</span> ${lintIssues.length} issues` : `<span class="ok">✓ lint:</span> clean`);
-      if (cov) tlog(`<span class="ok">✓ coverage:</span> ${cov.total} scenarios · ${cov.negative} negative`);
-      stage(3, "done"); stage(4, "run");
-
-      renderGates(q, lintIssues, cov);
-
-      const name = "generated." + lastExt;
-      $("outName").textContent = name;
-      $("outMeta").textContent = lastOut.length + " bytes";
-      const isCode = fmt === "gherkin" || fmt === "pom";
-      $("result").innerHTML =
-        `<div class="out-wrap"><button class="copy" onclick="navigator.clipboard.writeText(lastOut);this.textContent='copied ✓';setTimeout(()=>this.textContent='copy',1500)">copy</button>` +
-        `<pre class="out">${isCode ? hl(lastOut) : lastOut.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre></div>` +
-        `<div class="dl-row"><button class="dl-btn" id="dl">⬇ download ${name}</button>` +
-        (pomSummary ? `<span class="meta">${pomSummary.pages} page classes · XPath locators</span>` : `<span class="meta">utf-8 · lf</span>`) + `</div>`;
-      $("dl").onclick = () => {
-        const blob = new Blob([lastOut], { type: "text/plain" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob); a.download = name; a.click();
-        URL.revokeObjectURL(a.href);
-        tlog(`<span class="ok">✓</span> artifact written: <span class="hl">${name}</span>`);
-      };
-      stage(4, "done");
-      tlog('<span class="ok">■ build succeeded</span> <span class="t">in ' + (1800 + Math.floor(Math.random() * 400)) + 'ms</span>');
-    } finally {
-      busy = false; btn.disabled = false; btn.textContent = "▶ COMPILE";
-    }
-  }
-
-  const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add("in")), { threshold: .1 });
-  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+      const s = doGenerate();
+      celebrate();
+      say(`Done! ${s.scenarios} scenarios` + (s.score !== null ? `, quality ${s.score}/100` : "") + " 🎉", 3400);
+      await wait(2000);
+      goHome();
+    } finally { busy = false; }
+  });
 </script>
 </body>
 </html>
