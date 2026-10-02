@@ -3,414 +3,320 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Pickle Factory — Requirement → Crunchy Tests</title>
+<title>The Gherkin Alchemist — Requirements → Golden Tests</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=IM+Fell+English:ital@0;1&display=swap');
   :root{
-    --cream:#faf3e0; --cream2:#f3e8cd; --paper:#fffdf6;
-    --pickle:#4e7c2a; --pickle-d:#33581a; --pickle-l:#8fd14f; --pickle-xl:#c9ec9b;
-    --mustard:#f2b134; --mustard-d:#d1911f; --tomato:#e2574c; --tomato-d:#b93a30;
-    --ink:#2e3a1e; --muted:#7a7f5e; --wood:#8a5a33; --wood-d:#6b421f;
-    --line:#e3d5b3;
+    --night:#0d0a1f; --night2:#161130; --parchment:#f4e8c9; --parchment2:#e9d9ae;
+    --gold:#e8b64c; --gold-d:#b9862f; --violet:#7c5cff; --violet-d:#4a3699;
+    --brew:#39d0a5; --brew-d:#1d8a68; --blood:#e2574c;
+    --ink:#2a2140; --muted:#8a7fb0;
   }
   *{box-sizing:border-box}
   body{
-    margin:0; color:var(--ink);
-    font-family:'Fredoka','Trebuchet MS','Segoe UI',Verdana,sans-serif;
+    margin:0; color:var(--parchment);
+    font-family:Georgia,'Times New Roman',serif;
     background:
-      radial-gradient(circle at 12% 18%, rgba(143,209,79,.14) 0 90px, transparent 91px),
-      radial-gradient(circle at 88% 8%, rgba(242,177,52,.16) 0 70px, transparent 71px),
-      radial-gradient(circle at 78% 82%, rgba(143,209,79,.12) 0 110px, transparent 111px),
-      radial-gradient(circle at 8% 88%, rgba(226,87,76,.08) 0 80px, transparent 81px),
-      repeating-linear-gradient(45deg, var(--cream) 0 26px, var(--cream2) 26px 52px);
-    background-attachment:fixed;
+      radial-gradient(circle at 15% 10%, rgba(124,92,255,.18) 0 120px, transparent 121px),
+      radial-gradient(circle at 85% 20%, rgba(232,182,76,.12) 0 90px, transparent 91px),
+      radial-gradient(circle at 70% 90%, rgba(57,208,165,.08) 0 140px, transparent 141px),
+      linear-gradient(180deg, var(--night) 0%, var(--night2) 100%);
+    background-attachment:fixed; min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1200px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
+  .wrap{max-width:1100px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
 
-  /* ============ FACTORY SIGN ============ */
-  .signpost{display:flex;justify-content:center;gap:6px;margin-bottom:-6px}
-  .chain{width:8px;height:44px;background:repeating-linear-gradient(180deg,#6b421f 0 6px,#8a5a33 6px 12px);border-radius:4px}
-  .sign{
-    background:linear-gradient(180deg,#9c6633,#7c4f24);
-    border:4px solid var(--wood-d); border-radius:18px;
-    padding:1rem 2.6rem 1.2rem; text-align:center; position:relative;
-    box-shadow:0 10px 0 rgba(107,66,31,.35), 0 18px 30px rgba(60,40,15,.25);
-    transform:rotate(-1.2deg);
+  /* ============ SPELLBOOK TITLE ============ */
+  .grimoire{text-align:center;margin:1rem 0 2rem;position:relative}
+  .grimoire h1{
+    font-family:'Cinzel',serif;font-weight:900;
+    font-size:clamp(2rem,5.5vw,3.4rem);margin:0;letter-spacing:.04em;
+    background:linear-gradient(180deg,#ffe9a8,#e8b64c 60%,#b9862f);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 4px 24px rgba(232,182,76,.25);
   }
-  .sign h1{
-    margin:0; font-size:clamp(1.7rem,4.5vw,2.9rem); font-weight:700; letter-spacing:.02em;
-    color:#fff8e6; text-shadow:0 3px 0 var(--wood-d), 0 6px 12px rgba(0,0,0,.3);
+  .grimoire p{color:var(--muted);font-style:italic;margin:.5rem 0 0;font-size:1.05rem}
+  .grimoire p em{color:var(--gold)}
+  .stars{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .star{position:absolute;color:var(--gold);animation:twinkle 2.8s ease-in-out infinite;opacity:.7}
+  @keyframes twinkle{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:.9;transform:scale(1.15)}}
+
+  /* ============ LAB BENCH ============ */
+  .bench{
+    display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-bottom:1.6rem;
   }
-  .sign h1 .pk{color:var(--pickle-xl)}
-  .sign p{margin:.35rem 0 0;color:#ffe9b8;font-size:.95rem;font-weight:500}
-  .sign p em{font-family:'Caveat',cursive;font-size:1.15rem;color:var(--mustard)}
-  .gear{position:absolute;top:50%;width:64px;height:64px;margin-top:-32px;opacity:.9;
-        animation:spin 7s linear infinite;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
-  .gear.g1{left:-34px}.gear.g2{right:-34px;animation-direction:reverse;width:48px;height:48px;margin-top:-24px}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .steam{position:absolute;top:-34px;left:50%;width:14px;height:14px;border-radius:50%;
-         background:rgba(255,255,255,.85);animation:puff 2.6s ease-out infinite;pointer-events:none}
-  .steam.s2{animation-delay:.9s;left:calc(50% + 22px)}
-  .steam.s3{animation-delay:1.7s;left:calc(50% - 24px)}
-  @keyframes puff{0%{transform:translateY(8px) scale(.6);opacity:0}30%{opacity:.9}100%{transform:translateY(-46px) scale(1.9);opacity:0}}
-
-  /* ============ CONVEYOR ============ */
-  .belt-wrap{margin:2.2rem 0 .4rem;position:relative}
-  .stations{display:flex;justify-content:space-between;max-width:1000px;margin:0 auto .4rem;padding:0 .6rem}
-  .station{flex:1;text-align:center;position:relative;opacity:.45;transition:all .3s}
-  .station .ic{font-size:1.7rem;display:block;filter:grayscale(1);transition:all .3s}
-  .station .lb{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-  .station.on{opacity:1;transform:translateY(-4px)}
-  .station.on .ic{filter:none;animation:stationpop .45s cubic-bezier(.34,1.6,.64,1)}
-  .station.on .lb{color:var(--pickle-d)}
-  @keyframes stationpop{0%{transform:scale(.4) rotate(-14deg)}100%{transform:scale(1) rotate(0)}}
-  .belt{
-    height:64px;border-radius:14px;position:relative;overflow:hidden;
-    background:#3a3f35;border-top:5px solid #2b2f27;border-bottom:5px solid #2b2f27;
-    box-shadow:inset 0 6px 12px rgba(0,0,0,.45), 0 6px 0 rgba(0,0,0,.12);
+  @media(max-width:820px){.bench{grid-template-columns:1fr}}
+  .panel{
+    background:linear-gradient(180deg,rgba(30,24,58,.92),rgba(20,15,42,.94));
+    border:1px solid #3a2f6e;border-radius:18px;padding:1.4rem;
+    box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(232,182,76,.15);
+    position:relative;
   }
-  .belt::before{content:"";position:absolute;inset:0;
-    background:repeating-linear-gradient(115deg, transparent 0 26px, rgba(255,255,255,.09) 26px 52px);}
-  .belt.running::before{animation:beltmove .55s linear infinite}
-  @keyframes beltmove{to{background-position:60px 0}}
-  .belt .rollers{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:center;padding:0 6px;pointer-events:none}
-  .belt .rollers i{width:14px;height:44px;border-radius:7px;background:linear-gradient(180deg,#8b8f86,#5c6058)}
-  .traveller{position:absolute;top:50%;left:-60px;font-size:2rem;transform:translateY(-58%);
-             animation:travel 2.6s linear forwards;filter:drop-shadow(0 4px 4px rgba(0,0,0,.4))}
-  @keyframes travel{to{left:calc(100% + 20px)}}
-
-  /* ============ PANELS ============ */
-  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:1.3rem;margin-top:1.6rem;align-items:start}
-  @media(max-width:920px){.grid{grid-template-columns:1fr}}
-  .panel{background:var(--paper);border:3px solid var(--line);border-radius:20px;padding:1.2rem 1.3rem;
-         box-shadow:0 6px 0 rgba(138,90,51,.18);position:relative}
-  .panel > h2{margin:0 0 .9rem;font-size:1.05rem;letter-spacing:.05em;text-transform:uppercase;color:var(--pickle-d)}
-  .panel > h2 .tag{font-family:'Caveat',cursive;font-size:1.25rem;color:var(--tomato);text-transform:none;letter-spacing:0}
-  .crate{border:3px dashed var(--wood);border-radius:14px;padding:.7rem;background:#fdf8ea}
-  textarea{width:100%;height:290px;border:none;background:transparent;resize:vertical;
-           font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.6;color:var(--ink)}
-  textarea:focus{outline:none}
-  .recipe-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:1rem}
-  .seg{display:flex;border:3px solid var(--pickle);border-radius:14px;overflow:hidden;background:#fff}
-  .seg button{border:none;background:transparent;padding:.55rem .95rem;font:inherit;font-weight:600;
-               font-size:.84rem;color:var(--pickle-d);cursor:pointer;transition:all .18s}
-  .seg button + button{border-left:2px solid var(--pickle-xl)}
-  .seg button.active{background:var(--pickle);color:#fff}
-  .seg button:hover:not(.active){background:var(--pickle-xl)}
-  .toggle{display:flex;align-items:center;gap:.45rem;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;user-select:none}
-  .toggle input{display:none}
-  .toggle .sw{width:44px;height:24px;border-radius:14px;background:#d8cba6;position:relative;transition:background .2s;flex:none}
-  .toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
-                     background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:left .2s}
-  .toggle input:checked + .sw{background:var(--pickle)}
-  .toggle input:checked + .sw::after{left:23px}
-  .toggle input:checked ~ .tl{color:var(--pickle-d)}
-
-  /* ============ LEVER ============ */
-  .lever-panel{text-align:center;overflow:visible}
-  .lever-stage{position:relative;height:300px;margin:0 auto;max-width:340px}
-  .lever-base{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);width:150px;height:56px;
-              background:linear-gradient(180deg,#a8713a,#7c4f24);border:4px solid var(--wood-d);border-radius:16px;
-              box-shadow:0 6px 0 rgba(107,66,31,.4)}
-  .lever-base::after{content:"PULL TO PICKLE";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-                     font-size:.62rem;font-weight:700;letter-spacing:.12em;color:#ffe9b8;white-space:nowrap}
-  .lever-arm{position:absolute;bottom:66px;left:50%;width:20px;height:170px;margin-left:-10px;
-             background:linear-gradient(90deg,#c9c9c9,#8f8f8f 60%,#c9c9c9);border-radius:10px;
-             transform-origin:50% 100%;transform:rotate(-38deg);transition:transform .28s cubic-bezier(.34,1.4,.64,1);
-             cursor:pointer;box-shadow:0 4px 8px rgba(0,0,0,.25)}
-  .lever-arm::before{content:"";position:absolute;top:-34px;left:50%;transform:translateX(-50%);
-                     width:56px;height:56px;border-radius:50%;
-                     background:radial-gradient(circle at 35% 30%, #ff8a7a, var(--tomato) 55%, var(--tomato-d));
-                     box-shadow:0 5px 0 var(--tomato-d), 0 8px 14px rgba(0,0,0,.3);cursor:pointer}
-  .lever-arm.pulled{transform:rotate(38deg)}
-  .lever-note{font-family:'Caveat',cursive;font-size:1.3rem;color:var(--tomato);margin-top:.4rem;transform:rotate(-2deg)}
-  .gherky-spot{position:absolute;bottom:8px;right:6px;width:110px;height:130px;pointer-events:none}
-
-  /* ============ RESULTS ============ */
-  .results{margin-top:1.3rem;display:grid;grid-template-columns:.9fr 1.1fr;gap:1.3rem;align-items:start}
-  @media(max-width:920px){.results{grid-template-columns:1fr}}
-  .inspector{background:linear-gradient(180deg,#fffdf6,#fdf6e3)}
-  .stamp-zone{display:flex;align-items:center;gap:1rem;margin-bottom:.8rem;min-height:96px}
-  .stamp{width:92px;height:92px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
-         font-size:2.6rem;font-weight:700;border:6px double currentColor;transform:rotate(-12deg);opacity:0}
-  .stamp.slam{animation:slam .5s cubic-bezier(.2,2.4,.4,1) forwards}
-  @keyframes slam{0%{opacity:0;transform:rotate(-12deg) scale(2.6)}60%{opacity:1;transform:rotate(-12deg) scale(.94)}100%{opacity:1;transform:rotate(-12deg) scale(1)}}
-  .stamp.A{color:#1d9e6c;background:rgba(29,158,108,.1)}
-  .stamp.B{color:#7ab648;background:rgba(122,182,72,.12)}
-  .stamp.C{color:#d1911f;background:rgba(242,177,52,.14)}
-  .stamp.D,.stamp.F{color:var(--tomato);background:rgba(226,87,76,.1)}
-  .stamp-meta b{font-size:1.05rem}
-  .stamp-meta span{color:var(--muted);font-size:.85rem}
-  .finding{border-left:5px solid var(--mustard);background:#fff8e2;border-radius:0 12px 12px 0;
-           padding:.6rem .85rem;margin:.55rem 0;font-size:.85rem;box-shadow:0 2px 5px rgba(0,0,0,.06)}
-  .finding.high{border-color:var(--tomato);background:#fdeeee}
-  .finding .fix{color:var(--pickle-d);display:block;margin-top:.25rem;font-weight:600}
-  .kv{display:flex;gap:.5rem;flex-wrap:wrap;margin:.7rem 0}
-  .pill{border-radius:999px;padding:.32rem .85rem;font-size:.78rem;font-weight:700;border:2px solid}
-  .pill.ok{background:#e7f6df;color:#2f6b1e;border-color:#9ed07e}
-  .pill.warn{background:#fdf0da;color:#9a6210;border-color:#eec27a}
-  .pill.err{background:#fbe3e3;color:#a83a3a;border-color:#ef9a9a}
-  .jar{position:relative}
-  .jar-lid{height:34px;background:linear-gradient(180deg,var(--mustard),var(--mustard-d));
-           border:4px solid var(--mustard-d);border-bottom:none;border-radius:16px 16px 0 0;
-           position:relative;box-shadow:inset 0 3px 0 rgba(255,255,255,.4)}
-  .jar-lid::before{content:"🥒 DILL-ICIOUS FEATURE FILE 🥒";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-                   font-size:.72rem;font-weight:700;letter-spacing:.14em;color:#7a4d0e}
-  pre.out{background:#20301a;color:#dff0c8;border:4px solid var(--mustard-d);border-top:none;border-radius:0 0 16px 16px;
-          padding:1.1rem;margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.65;
-          overflow:auto;white-space:pre-wrap;max-height:430px;min-height:180px}
-  pre.out:empty::after{content:""}
-  button.dl{background:var(--tomato);color:#fff;border:none;border-radius:14px;padding:.7rem 1.5rem;
-            font:inherit;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:.9rem;
-            box-shadow:0 4px 0 var(--tomato-d);transition:transform .12s}
-  button.dl:hover{filter:brightness(1.07)}
-  button.dl:active{transform:translateY(3px);box-shadow:none}
-  .empty{text-align:center;padding:2.6rem 1rem;color:var(--muted);font-size:.92rem}
-  .empty .big{font-size:3rem;display:block;margin-bottom:.5rem;animation:bob 2.6s ease-in-out infinite}
-  .repo-link{text-align:center;margin-top:1.6rem;font-size:.85rem;color:var(--muted)}
-  .repo-link a{color:var(--pickle-d);font-weight:700}
-  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:1.2rem}
-  footer .fine{font-family:'Caveat',cursive;font-size:1.1rem;color:var(--pickle-d)}
-
-  /* ============ GHERKY (pickle foreman) ============ */
-  #gherky{position:fixed;right:26px;bottom:18px;width:96px;z-index:60;cursor:pointer;
-          transition:transform .8s cubic-bezier(.45,.05,.35,1)}
-  #gherky .pk-bob{animation:bob 2.8s ease-in-out infinite}
-  @keyframes bob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-8px) rotate(1.5deg)}}
-  #gherky.waddling .pk-bob{animation:waddle .38s ease-in-out infinite}
-  @keyframes waddle{0%,100%{transform:translateY(0) rotate(-7deg)}50%{transform:translateY(-6px) rotate(7deg)}}
-  #gherky .eye{animation:blink 4.4s infinite;transform-origin:center;transform-box:fill-box}
-  @keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
-  #gherky .armR{transform-origin:78px 96px;transition:transform .25s}
-  #gherky.pulling .armR{transform:rotate(-72deg)}
-  #gherky.jumping .pk-bob{animation:jump .7s ease}
-  @keyframes jump{0%,100%{transform:translateY(0)}35%{transform:translateY(-40px) rotate(-8deg)}65%{transform:translateY(-40px) rotate(8deg)}}
-  #gherky .bubble{position:absolute;bottom:calc(100% + 12px);right:-8px;min-width:160px;max-width:230px;
-                  background:#fffdf6;border:3px solid var(--pickle);border-radius:14px;
-                  box-shadow:0 8px 22px rgba(46,58,30,.2);padding:.6rem .75rem;font-size:.8rem;line-height:1.45;
-                  opacity:0;transform:translateY(8px) rotate(1deg);transition:all .25s;pointer-events:none}
-  #gherky .bubble::after{content:"";position:absolute;top:100%;right:30px;border:8px solid transparent;border-top-color:var(--pickle)}
-  #gherky .bubble.show{opacity:1;transform:translateY(0) rotate(-1deg)}
-  .pickle-confetti{position:fixed;top:-30px;font-size:1.4rem;z-index:99;pointer-events:none;animation:fall 2.1s ease-in forwards}
-  @keyframes fall{to{transform:translateY(110vh) rotate(680deg)}}
-  @media(max-width:640px){
-    #gherky{width:70px;right:10px;bottom:10px}
-    .gear{display:none}
-    .station .lb{font-size:.58rem}
+  .panel h2{
+    font-family:'Cinzel',serif;font-size:1.05rem;letter-spacing:.12em;color:var(--gold);
+    margin:0 0 .9rem;display:flex;align-items:center;gap:.5rem;
   }
+  .panel h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#3a2f6e,transparent)}
+
+  textarea#story{
+    width:100%;min-height:190px;resize:vertical;
+    background:#0a0718;color:var(--parchment);
+    border:1px solid #3a2f6e;border-radius:12px;padding:.9rem;
+    font-family:Georgia,serif;font-size:.95rem;line-height:1.6;
+  }
+  textarea#story:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,92,255,.25)}
+  textarea#story::placeholder{color:#5a4f8a;font-style:italic}
+
+  /* format selector as potion shelf */
+  .shelf{display:flex;gap:.5rem;flex-wrap:wrap;margin:.9rem 0}
+  .potion-tab{
+    border:1px solid #3a2f6e;background:#141026;color:var(--muted);
+    border-radius:999px;padding:.45rem 1rem;font-size:.85rem;cursor:pointer;
+    font-family:Georgia,serif;transition:.18s;
+  }
+  .potion-tab:hover{border-color:var(--violet);color:var(--parchment)}
+  .potion-tab.active{background:linear-gradient(180deg,#2c2358,#1c1640);border-color:var(--gold);color:var(--gold);box-shadow:0 0 14px rgba(232,182,76,.25)}
+
+  .toggles{display:flex;gap:1rem;flex-wrap:wrap;margin:.4rem 0 .2rem;font-size:.9rem;color:var(--muted)}
+  .toggles label{display:flex;align-items:center;gap:.45rem;cursor:pointer}
+  .toggles input{accent-color:var(--violet);width:17px;height:17px;cursor:pointer}
+
+  /* ============ CAULDRON ============ */
+  .cauldron-zone{position:relative;text-align:center;padding:1rem 0 .4rem;min-height:340px}
+  .cauldron{font-size:120px;position:relative;display:inline-block;filter:drop-shadow(0 14px 24px rgba(0,0,0,.6))}
+  .cauldron.brewing{animation:shake .5s ease-in-out infinite}
+  @keyframes shake{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+  .bubbles{position:absolute;left:50%;bottom:118px;width:120px;height:90px;transform:translateX(-50%);pointer-events:none;overflow:visible}
+  .bubble{position:absolute;bottom:0;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, rgba(190,255,230,.95), rgba(57,208,165,.55));
+    animation:rise linear infinite;opacity:0}
+  .brewing .bubble{opacity:1}
+  @keyframes rise{0%{transform:translateY(0) scale(.5);opacity:0}15%{opacity:.95}100%{transform:translateY(-85px) scale(1.15);opacity:0}}
+  .brew-btn{
+    font-family:'Cinzel',serif;font-weight:700;font-size:1.15rem;letter-spacing:.06em;
+    background:linear-gradient(180deg,#f4cd6e,#d99f2e);color:#3a2404;
+    border:none;border-radius:14px;padding:.95rem 3rem;cursor:pointer;margin-top:1rem;
+    box-shadow:0 6px 0 #8a5f16, 0 12px 26px rgba(232,182,76,.35);transition:.15s;
+  }
+  .brew-btn:hover{filter:brightness(1.06)}
+  .brew-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f16}
+  .brew-btn:disabled{opacity:.55;cursor:wait}
+
+  /* alchemist */
+  #alchemist{position:absolute;font-size:56px;left:6%;bottom:24px;transition:left 1s ease-in-out;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+  #alchemist .speech{
+    position:absolute;bottom:110%;left:50%;transform:translateX(-50%);
+    background:var(--parchment);color:var(--ink);font-size:.82rem;font-style:italic;
+    padding:.5rem .8rem;border-radius:12px;white-space:nowrap;opacity:0;transition:.25s;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;max-width:280px;white-space:normal;
+  }
+  #alchemist.talking .speech{opacity:1}
+  #alchemist.stirring{animation:stir .6s ease-in-out infinite}
+  @keyframes stir{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+  /* brewing stages */
+  .stages{display:flex;justify-content:center;gap:.4rem;margin:1.1rem 0 .2rem;flex-wrap:wrap}
+  .stage{
+    font-size:.78rem;letter-spacing:.08em;color:var(--muted);
+    border:1px solid #2c2454;padding:.4rem .8rem;border-radius:999px;transition:.3s;
+    font-family:'Cinzel',serif;
+  }
+  .stage.lit{color:#0d0a1f;background:linear-gradient(180deg,#9d86ff,#7c5cff);border-color:#9d86ff;box-shadow:0 0 16px rgba(124,92,255,.5)}
+  .stage.done{color:var(--gold);border-color:var(--gold)}
+
+  /* ============ OUTPUT ============ */
+  #result{margin-top:.4rem}
+  .elixir{
+    background:linear-gradient(180deg,#fffdf4,#f7ecd2);
+    color:var(--ink);border-radius:16px;padding:1.2rem;
+    border:3px solid var(--gold);box-shadow:0 10px 30px rgba(0,0,0,.4);
+    position:relative;
+  }
+  .elixir::before{content:"🧪";position:absolute;top:-22px;left:20px;font-size:34px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
+  .elixir h3{font-family:'Cinzel',serif;color:#7a5a12;margin:.4rem 0 .8rem;font-size:1rem;letter-spacing:.08em}
+  .elixir pre{
+    background:#141026;color:#c9f5e6;border-radius:10px;padding:1rem;
+    font-family:ui-monospace,Consolas,monospace;font-size:.83rem;line-height:1.65;
+    max-height:380px;overflow:auto;white-space:pre-wrap;margin:0;
+  }
+  .kv{display:flex;gap:.5rem;flex-wrap:wrap;margin:.8rem 0}
+  .pill{font-size:.75rem;font-weight:700;padding:.3rem .75rem;border-radius:999px;letter-spacing:.03em}
+  .pill.ok{background:#dff5e6;color:#1d7a4c}.pill.warn{background:#fdf0d3;color:#9a6b12}.pill.err{background:#fbdddd;color:#b93a30}
+  .dl{
+    display:inline-block;margin-top:.6rem;background:linear-gradient(180deg,#39d0a5,#1d8a68);color:#04231a;
+    border:none;border-radius:10px;padding:.7rem 1.6rem;font-weight:700;cursor:pointer;font-size:.95rem;
+    box-shadow:0 4px 0 #0f5c42;font-family:Georgia,serif;
+  }
+  .dl:active{transform:translateY(3px);box-shadow:none}
+
+  /* quality as purity seal */
+  #quality{margin-top:1rem}
+  .seal{
+    background:linear-gradient(180deg,rgba(30,24,58,.92),rgba(20,15,42,.94));
+    border:1px solid #3a2f6e;border-radius:16px;padding:1.2rem;position:relative;overflow:hidden;
+  }
+  .seal .score{font-family:'Cinzel',serif;font-size:2.6rem;font-weight:900;color:var(--gold)}
+  .seal .bar{height:10px;background:#141026;border-radius:99px;margin:.7rem 0;overflow:hidden}
+  .seal .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--brew));transition:width 1s}
+  .finding{font-size:.85rem;padding:.45rem 0;border-bottom:1px dashed #2c2454;color:var(--parchment)}
+  .finding .fix{display:block;color:var(--brew);font-size:.8rem}
+  .finding.critical{color:#ffb3ab}.finding.warning{color:#ffe1a1}
+  #stamp{
+    position:absolute;top:14px;right:16px;font-family:'Cinzel',serif;font-weight:900;
+    font-size:1rem;letter-spacing:.1em;color:var(--brew);border:3px solid var(--brew);
+    border-radius:10px;padding:.35rem .8rem;transform:rotate(10deg) scale(3);opacity:0;
+  }
+  #stamp.slam{animation:slam .5s forwards}
+  @keyframes slam{to{transform:rotate(-8deg) scale(1);opacity:.92}}
+
+  .empty{text-align:center;color:var(--muted);font-style:italic;padding:1.4rem}
+  .empty .big{font-size:2.4rem;display:block;margin-bottom:.4rem}
+
+  footer{text-align:center;color:var(--muted);font-size:.85rem;padding:2rem 0 1rem;font-style:italic}
+  footer a{color:var(--gold)}
+  .reveal{opacity:0;transform:translateY(22px);transition:.6s}
+  .reveal.in{opacity:1;transform:none}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- FACTORY SIGN -->
-  <div class="signpost"><div class="chain"></div><div class="chain" style="margin-left:280px"></div></div>
-  <div style="display:flex;justify-content:center">
-    <div class="sign">
-      <svg class="gear g1" viewBox="0 0 64 64"><path fill="#f2b134" stroke="#6b421f" stroke-width="2" d="M32 8l3 7 7-3 1 8 8-1 3 7 7 3-3 7 8 1-1 8-7 3-3 7-7-3-1 8-8 1-3 7-7 3 3-7-8-1 1-8 7-3 3-7 7 3 1-8 8-1z"/><circle cx="32" cy="32" r="9" fill="#7c4f24"/></svg>
-      <svg class="gear g2" viewBox="0 0 64 64"><path fill="#8fd14f" stroke="#33581a" stroke-width="2" d="M32 8l3 7 7-3 1 8 8-1 3 7 7 3-3 7 8 1-1 8-7 3-3 7-7-3-1 8-8 1-3 7-7 3 3-7-8-1 1-8 7-3 3-7 7 3 1-8 8-1z"/><circle cx="32" cy="32" r="9" fill="#33581a"/></svg>
-      <div class="steam"></div><div class="steam s2"></div><div class="steam s3"></div>
-      <h1>🥒 THE <span class="pk">PICKLE</span> FACTORY</h1>
-      <p>Raw requirements in → <em>crunchy, executable tests out.</em> Everything brines right in your browser.</p>
-    </div>
+  <div class="grimoire reveal in">
+    <div class="stars" id="stars"></div>
+    <h1>⚗ The Gherkin Alchemist</h1>
+    <p>Toss in raw requirements — <em>out comes golden Gherkin.</em> No toads were harmed.</p>
   </div>
 
-  <!-- CONVEYOR -->
-  <div class="belt-wrap">
-    <div class="stations" id="stations">
-      <div class="station" data-s="0"><span class="ic">📥</span><span class="lb">Intake</span></div>
-      <div class="station" data-s="1"><span class="ic">🔪</span><span class="lb">Slice</span></div>
-      <div class="station" data-s="2"><span class="ic">🫙</span><span class="lb">Brine</span></div>
-      <div class="station" data-s="3"><span class="ic">🔍</span><span class="lb">Inspect</span></div>
-      <div class="station" data-s="4"><span class="ic">🏷️</span><span class="lb">Jar it</span></div>
-    </div>
-    <div class="belt" id="belt">
-      <div class="rollers"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    </div>
-  </div>
+  <div class="bench">
+    <div class="panel reveal in">
+      <h2>📜 Raw Ingredients</h2>
+      <textarea id="story" placeholder="Paste your requirement here, mortal…
 
-  <div class="grid">
-    <!-- LOADING DOCK -->
-    <div class="panel">
-      <h2>📦 Loading dock <span class="tag">— dump your raw requirement here</span></h2>
-      <div class="crate">
-        <textarea id="story"># User login
+As a shopper, I want to add items to my cart, so that I can checkout later.
 
-As a registered user, I want to log in with my email and password,
-so that I can access my account securely.
-
-Acceptance Criteria:
-- When the user submits valid credentials, then they are taken to the dashboard
-- An error is shown for unregistered email addresses (admin, user, guest)</textarea>
+Acceptance criteria:
+- When I click add to cart then the cart badge shows 1
+- When I add two items then the total is correct"></textarea>
+      <div class="shelf" id="fmtTabs">
+        <button class="potion-tab active" data-fmt="gherkin">🧪 Gherkin</button>
+        <button class="potion-tab" data-fmt="json">🔮 JSON</button>
+        <button class="potion-tab" data-fmt="markdown">📖 Markdown</button>
+        <button class="potion-tab" data-fmt="pom">⚗️ POM (Python)</button>
       </div>
-      <h2 style="margin-top:1.1rem">🧂 Pickling recipe</h2>
-      <div class="recipe-row">
-        <div class="seg" id="fmtTabs">
-          <button data-fmt="gherkin" class="active">🥒 Gherkin</button>
-          <button data-fmt="json">🧾 JSON</button>
-          <button data-fmt="markdown">📋 Markdown</button>
-          <button data-fmt="pom">🏺 Page Objects</button>
+      <div class="toggles">
+        <label><input type="checkbox" id="wantQuality" checked> 🔍 Purity inspection</label>
+        <label><input type="checkbox" id="wantLint" checked> 🧹 Lint sweep</label>
+        <label><input type="checkbox" id="wantReport" checked> 📊 Coverage chart</label>
+      </div>
+    </div>
+
+    <div class="panel reveal in">
+      <h2>🔥 The Brewing</h2>
+      <div class="cauldron-zone">
+        <div id="alchemist">🧙<span class="speech" id="bubble"></span></div>
+        <div class="cauldron" id="cauldron">🍲<div class="bubbles" id="bubbles"></div></div>
+        <div class="stages" id="stages">
+          <span class="stage">Gather</span><span class="stage">Chop</span>
+          <span class="stage">Brew</span><span class="stage">Taste</span><span class="stage">Bottle</span>
         </div>
+        <button class="brew-btn" id="brewBtn" onclick="startBrewing()">⚗ Brew it!</button>
       </div>
-      <div class="recipe-row">
-        <label class="toggle"><input type="checkbox" id="wantQuality" checked><span class="sw"></span><span class="tl">🔍 Brine inspector</span></label>
-        <label class="toggle"><input type="checkbox" id="wantReport" checked><span class="sw"></span><span class="tl">📊 Crunch report</span></label>
-        <label class="toggle"><input type="checkbox" id="wantLint" checked><span class="sw"></span><span class="tl">🧼 Rinse (lint)</span></label>
-      </div>
-    </div>
-
-    <!-- THE BIG LEVER -->
-    <div class="panel lever-panel">
-      <h2>🎛️ The big lever <span class="tag">— Gherky pulls it. Or you can.</span></h2>
-      <div class="lever-stage">
-        <div class="lever-arm" id="lever" title="Pull to pickle!"></div>
-        <div class="lever-base"></div>
-        <div class="gherky-spot"></div>
-      </div>
-      <div class="lever-note">← give it a yank! the belt does the rest</div>
     </div>
   </div>
 
-  <!-- RESULTS -->
-  <div class="results">
-    <div class="panel inspector" id="inspectorPanel">
-      <h2>🔍 Brine inspector <span class="tag">— grades your requirement before it ships</span></h2>
-      <div id="quality"><div class="empty"><span class="big">🥒</span>The belt is empty…<br>feed the dock a requirement, then yank the lever!</div></div>
-    </div>
-    <div class="panel">
-      <h2>🫙 Fresh from the jar <span class="tag">— hot, crunchy scenarios</span></h2>
-      <div id="result"><div class="empty"><span class="big">🫙</span>Nothing brining yet.<br>Your feature file lands here, sealed &amp; labeled.</div></div>
-    </div>
+  <div class="panel reveal in">
+    <h2>🧪 Bottled Elixir</h2>
+    <div id="result"><div class="empty"><span class="big">🍲</span>The cauldron is cold and empty.<br>Brew something above!</div></div>
   </div>
 
-  <p class="repo-link">This demo runs the offline pickling engine in your browser — no cucumbers leave this page. 🥒<br>
-    The full factory (Azure OpenAI engine, CLI, headless execution) lives on
-    <a href="https://github.com/dharshuadhi/ai-gherkin-generator">GitHub</a>.</p>
-  <footer><span class="fine">No cucumbers were harmed in the making of these tests.</span><br>
-    Built by Dharshini Adimoolam · MIT License</footer>
-</div>
+  <div id="quality"></div>
 
-<!-- GHERKY -->
-<div id="gherky" title="Gherky, foreman of the pickle factory">
-  <div class="bubble" id="bubble"></div>
-  <svg class="pk-bob" viewBox="0 0 96 130" width="96" height="130" aria-label="Gherky the pickle">
-    <!-- hard hat -->
-    <path d="M28 26 Q48 2 68 26 L68 32 L28 32 Z" fill="#f2b134" stroke="#d1911f" stroke-width="3"/>
-    <rect x="22" y="30" width="52" height="8" rx="4" fill="#d1911f"/>
-    <!-- pickle body -->
-    <path d="M48 34 C74 34 84 58 84 88 C84 112 66 126 48 126 C30 126 12 112 12 88 C12 58 22 34 48 34 Z"
-          fill="#5c8f2f" stroke="#33581a" stroke-width="3.5"/>
-    <!-- bumps -->
-    <g fill="#8fd14f" opacity=".85">
-      <ellipse cx="32" cy="58" rx="5" ry="8"/><ellipse cx="62" cy="52" rx="5" ry="8"/>
-      <ellipse cx="48" cy="76" rx="5" ry="8"/><ellipse cx="28" cy="96" rx="5" ry="8"/>
-      <ellipse cx="68" cy="94" rx="5" ry="8"/><ellipse cx="48" cy="112" rx="5" ry="7"/>
-    </g>
-    <!-- face -->
-    <ellipse class="eye" cx="38" cy="66" rx="6" ry="7.5" fill="#fff"/>
-    <ellipse class="eye" cx="58" cy="66" rx="6" ry="7.5" fill="#fff"/>
-    <circle cx="39.5" cy="68" r="3" fill="#2e3a1e"/><circle cx="59.5" cy="68" r="3" fill="#2e3a1e"/>
-    <path d="M40 84 Q48 92 56 84" stroke="#2e3a1e" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <circle cx="30" cy="76" r="3.5" fill="#e2574c" opacity=".55"/><circle cx="66" cy="76" r="3.5" fill="#e2574c" opacity=".55"/>
-    <!-- arms -->
-    <path d="M14 92 Q4 96 6 106" stroke="#33581a" stroke-width="7" fill="none" stroke-linecap="round"/>
-    <g class="armR"><path d="M82 92 Q94 96 92 108" stroke="#33581a" stroke-width="7" fill="none" stroke-linecap="round"/>
-      <circle cx="92" cy="110" r="5" fill="#8fd14f" stroke="#33581a" stroke-width="2"/></g>
-    <!-- feet -->
-    <ellipse cx="36" cy="128" rx="9" ry="4.5" fill="#33581a"/>
-    <ellipse cx="60" cy="128" rx="9" ry="4.5" fill="#33581a"/>
-  </svg>
+  <footer>
+    Brewed by <a href="https://github.com/dharshuadhi">Dharshini Adimoolam</a> ·
+    <a href="https://github.com/dharshuadhi/ai-gherkin-generator">grimoire (repo)</a><br>
+    Rule-based engine · zero dependencies · works fully offline
+  </footer>
 </div>
 
 <script src="engine.js"></script>
 <script src="quality.js"></script>
 <script src="pom.js"></script>
 <script>
-  let fmt = "gherkin", lastOut = "", lastExt = "feature";
   const $ = id => document.getElementById(id);
   const wait = ms => new Promise(r => setTimeout(r, ms));
+  let fmt = "gherkin", lastOut = "", lastExt = "feature";
+  const alchemist = $("alchemist"), cauldron = $("cauldron"), bubble = $("bubble");
 
-  document.querySelectorAll("#fmtTabs button").forEach(b => {
-    b.onclick = () => {
-      document.querySelectorAll("#fmtTabs button").forEach(x => x.classList.remove("active"));
-      b.classList.add("active");
-      fmt = b.dataset.fmt;
-    };
-  });
-
-  /* ---------- conveyor stations ---------- */
-  const stations = [...document.querySelectorAll("#stations .station")];
-  const belt = $("belt");
-  function setStation(n) {
-    stations.forEach((el, i) => el.classList.toggle("on", i <= n));
-  }
-  function resetStations() { stations.forEach(el => el.classList.remove("on")); }
-  function rollPickles() {
-    for (let i = 0; i < 4; i++) {
-      const p = document.createElement("div");
-      p.className = "traveller";
-      p.textContent = ["🥒", "🥒", "🫙", "🥒"][i];
-      p.style.animationDelay = (i * 0.45) + "s";
-      belt.appendChild(p);
-      setTimeout(() => p.remove(), 4600);
+  /* twinkling stars */
+  (() => {
+    const s = $("stars");
+    for (let i = 0; i < 26; i++) {
+      const sp = document.createElement("span");
+      sp.className = "star"; sp.textContent = "✦";
+      sp.style.left = Math.random() * 100 + "%";
+      sp.style.top = Math.random() * 100 + "%";
+      sp.style.fontSize = (8 + Math.random() * 12) + "px";
+      sp.style.animationDelay = (Math.random() * 3) + "s";
+      s.appendChild(sp);
     }
-  }
+  })();
 
-  /* ---------- Gherky ---------- */
-  const gherky = $("gherky"), bubble = $("bubble"), lever = $("lever");
-  let bubbleTimer = null;
-  function say(text, ms = 2800) {
+  /* bubbles */
+  (() => {
+    const b = $("bubbles");
+    for (let i = 0; i < 12; i++) {
+      const d = document.createElement("div");
+      d.className = "bubble";
+      const sz = 8 + Math.random() * 16;
+      d.style.width = d.style.height = sz + "px";
+      d.style.left = (10 + Math.random() * 100) + "px";
+      d.style.animationDuration = (1.2 + Math.random() * 1.8) + "s";
+      d.style.animationDelay = (Math.random() * 2) + "s";
+      b.appendChild(d);
+    }
+  })();
+
+  /* format tabs */
+  document.querySelectorAll(".potion-tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".potion-tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); fmt = t.dataset.fmt;
+    say(fmt === "pom" ? "Page Objects? A ambitious vintage! ⚗️" : "A fine choice of vessel. 🧪", 1800);
+  }));
+
+  function say(text, ms) {
     bubble.textContent = text;
-    bubble.classList.add("show");
-    clearTimeout(bubbleTimer);
-    if (ms) bubbleTimer = setTimeout(() => bubble.classList.remove("show"), ms);
+    alchemist.classList.add("talking");
+    clearTimeout(say._t);
+    say._t = setTimeout(() => alchemist.classList.remove("talking"), ms || 2200);
   }
-  async function walkTo(el) {
-    gherky.classList.add("waddling");
-    const m = gherky.getBoundingClientRect(), b = el.getBoundingClientRect();
-    const dx = (b.left + b.width / 2) - (m.left + m.width / 2) - 60;
-    const dy = (b.top + b.height - 40) - (m.top + m.height);
-    gherky.style.transform = `translate(${dx}px, ${dy}px)`;
-    await wait(850);
-    gherky.classList.remove("waddling");
+  function setStage(i) {
+    document.querySelectorAll(".stage").forEach((s, j) => {
+      s.classList.toggle("lit", j === i);
+      s.classList.toggle("done", j < i);
+    });
   }
-  function goHome() { gherky.style.transform = ""; }
-  function celebrate() {
-    gherky.classList.add("jumping");
-    setTimeout(() => gherky.classList.remove("jumping"), 750);
-    for (let i = 0; i < 22; i++) {
-      const c = document.createElement("div");
-      c.className = "pickle-confetti";
-      c.textContent = ["🥒", "🫙", "✨"][i % 3];
-      c.style.left = (30 + Math.random() * 40) + "vw";
-      c.style.animationDelay = (Math.random() * 0.4) + "s";
-      document.body.appendChild(c);
-      setTimeout(() => c.remove(), 2600);
-    }
+  function resetStages() {
+    document.querySelectorAll(".stage").forEach(s => s.classList.remove("lit", "done"));
   }
-  const puns = [
-    "I'm kind of a big dill around here. 🥒",
-    "Relish the moment — quality takes time! ✨",
-    "Brine and shine! Another crisp batch. 🫙",
-    "You should see my LinkedIn: 'Professional Pickler'. 😎",
-    "Vague words like 'fast' give me heartburn. Give me numbers! 🔢",
-    "I run 100% in your browser. No servers were brined. 🤖",
-    "Tip: (admin, user, guest) becomes a Scenario Outline. Brine-illiant! 🧬",
-  ];
-  gherky.addEventListener("click", () => say(puns[Math.floor(Math.random() * puns.length)]));
-  setTimeout(() => say("Howdy! I'm Gherky — dump a requirement on the dock, then yank the lever! 🥒", 5200), 900);
+  function walkToCauldron() {
+    alchemist.style.left = "38%";
+    return wait(1050);
+  }
+  function goHome() {
+    alchemist.style.left = "6%";
+    alchemist.classList.remove("stirring");
+  }
 
-  /* ---------- result rendering ---------- */
   function qualityCard(q) {
-    let h = `<div class="stamp-zone"><div class="stamp ${q.grade}" id="stamp">${q.grade}</div>
-      <div class="stamp-meta"><b>Requirement quality: ${q.score}/100</b><br>
-      <span>${q.findings.length} finding${q.findings.length === 1 ? "" : "s"} from the brine inspector</span></div></div>`;
+    let h = `<div class="seal"><div id="stamp">✓ PURE</div>
+      <div style="font-family:'Cinzel',serif;letter-spacing:.12em;font-size:.8rem;color:var(--muted)">PURITY INSPECTION</div>
+      <div class="score">${q.score}<span style="font-size:1.2rem;color:var(--muted)">/100</span></div>
+      <div class="bar"><i style="width:${q.score}%"></i></div>`;
     q.findings.forEach(f => {
       h += `<div class="finding ${f.severity}"><b>[${f.severity}]</b> ${f.message}<span class="fix">→ ${f.suggestion}</span></div>`;
     });
-    if (!q.findings.length) h += `<div class="kv"><span class="pill ok">✓ crisp, crunchy, testable</span></div>`;
-    return h;
+    if (!q.findings.length) h += `<div class="kv"><span class="pill ok">✓ flawless elixir — no impurities</span></div>`;
+    return h + `</div>`;
   }
 
   function doGenerate() {
@@ -435,32 +341,32 @@ Acceptance Criteria:
       $("quality").innerHTML = qualityCard(q);
       requestAnimationFrame(() => $("stamp").classList.add("slam"));
     } else {
-      $("quality").innerHTML = `<div class="empty"><span class="big">😴</span>Inspector's on a coffee break.<br>Flip the 🔍 toggle to wake him up.</div>`;
+      $("quality").innerHTML = `<div class="empty"><span class="big">😴</span>The inspector is napping in the tower.<br>Tick 🔍 to wake him.</div>`;
     }
 
     const fmtLabel = isPOM ? "Page Objects (Python)" : fmt;
-    let h = `<div class="kv"><span class="pill ok">🥒 sealed fresh</span><span class="pill warn">${fmtLabel}</span></div>`;
+    let h = `<div class="elixir"><h3>✨ FRESHLY BREWED · ${fmtLabel.toUpperCase()}</h3><pre></pre></div><div class="kv">`;
+    h += `<div class="kv"><span class="pill ok">⚗ bottled fresh</span><span class="pill warn">${fmtLabel}</span></div>`;
     if (isPOM && pomSummary) {
       h += `<div class="kv"><span class="pill ok">${pomSummary.pages} page classes</span>`
          + `<span class="pill ok">${pomSummary.tests} tests</span>`
          + `<span class="pill warn">XPath locators</span></div>`;
     }
-    h += `<div class="jar"><div class="jar-lid"></div><pre class="out"></pre></div><div class="kv">`;
     if (!isPOM && $("wantReport").checked) {
       const c = analyzeCoverage(feature);
       h += `<span class="pill ok">${c.total} scenarios</span>
             <span class="pill ${c.negative ? "warn" : "ok"}">${c.negative} negative</span>
             <span class="pill ${c.outlines ? "ok" : "warn"}">${c.outlines} outlines</span>`;
-      if (c.warnings.length) h += `<span class="pill warn">⚠ ${c.warnings.length} crunch note${c.warnings.length === 1 ? "" : "s"}</span>`;
+      if (c.warnings.length) h += `<span class="pill warn">⚠ ${c.warnings.length} tasting note${c.warnings.length === 1 ? "" : "s"}</span>`;
     }
     if (!isPOM && $("wantLint").checked) {
       const issues = lintGherkin(lastOut);
-      h += issues.length ? `<span class="pill err">✗ ${issues.length} rinse issue${issues.length === 1 ? "" : "s"}</span>`
-                         : `<span class="pill ok">✓ squeaky clean</span>`;
+      h += issues.length ? `<span class="pill err">✗ ${issues.length} impurity${issues.length === 1 ? "" : "ies"}</span>`
+                         : `<span class="pill ok">✓ crystal clear</span>`;
     }
-    h += `</div><button class="dl" id="dl">🫙 Jar it! Download .${lastExt}</button>`;
+    h += `</div><button class="dl" id="dl">🧪 Bottle it! Download .${lastExt}</button>`;
     $("result").innerHTML = h;
-    $("result").querySelector("pre.out").textContent = lastOut;
+    $("result").querySelector("pre").textContent = lastOut;
     $("dl").onclick = () => {
       const blob = new Blob([lastOut], { type: "text/plain" });
       const a = document.createElement("a");
@@ -468,44 +374,54 @@ Acceptance Criteria:
       a.download = "generated." + lastExt;
       a.click();
       URL.revokeObjectURL(a.href);
-      setStation(4);
-      say("Sealed & labeled! Straight to the pantry. 🏷️", 2600);
+      setStage(4);
+      say("Corked & labeled! To the cellar it goes. 🏷️", 2600);
     };
     return { scenarios: isPOM && pomSummary ? pomSummary.tests : feature.scenarios.length, score };
   }
 
-  /* ---------- the big pull ---------- */
+  /* ---------- the big brew ---------- */
   let busy = false;
-  async function startPickling() {
+  async function startBrewing() {
     if (busy) return;
-    if (!$("story").value.trim()) { say("The dock is empty! Paste a requirement first! 📦"); setStation(0); return; }
+    if (!$("story").value.trim()) { say("The pantry is bare! Paste a requirement first! 📜"); setStage(-1); return; }
     busy = true;
+    const btn = $("brewBtn"); btn.disabled = true;
     try {
-      resetStations();
-      say("Fresh batch incoming! 🥒");
-      await walkTo(lever);
-      gherky.classList.add("pulling");
-      lever.classList.add("pulled");
-      say("YANK! 💪");
-      await wait(320);
-      gherky.classList.remove("pulling");
-      belt.classList.add("running");
-      rollPickles();
-      setStation(0); say("Intaking the raw goods… 📥"); await wait(500);
-      setStation(1); say("Slicing into scenarios… 🔪"); await wait(500);
-      setStation(2); say("Brining in Gherkin… 🫙");
+      resetStages();
+      say("Ahh, fresh ingredients! 🧙");
+      await walkToCauldron();
+      alchemist.classList.add("stirring");
+      cauldron.classList.add("brewing");
+      say("Double, double… boil and bubble! 🔥");
+      await wait(400);
+      setStage(0); say("Gathering the raw goods… 🌿"); await wait(550);
+      setStage(1); say("Chopping into scenarios… 🔪"); await wait(550);
+      setStage(2); say("Brewing in pure Gherkin… 🫧");
       const s = doGenerate();
-      await wait(600);
-      setStation(3); say("Inspector grades the batch… 🔍"); await wait(500);
-      lever.classList.remove("pulled");
-      belt.classList.remove("running");
-      celebrate();
-      say(`Done! ${s.scenarios} crunchy scenarios` + (s.score !== null ? `, graded ${s.score}/100` : "") + " 🎉", 3600);
-      await wait(2200);
+      await wait(650);
+      setStage(3); say("Tasting for purity… 👅"); await wait(550);
+      cauldron.classList.remove("brewing");
+      alchemist.classList.remove("stirring");
+      setStage(4);
+      const cheers = [
+        `✨ ${s.scenarios} scenarios bottled! The coven approves.`,
+        `🧪 Behold! ${s.scenarios} sparkling scenarios, no eye of newt required.`,
+        `⚗ Another flawless transmutation! ${s.scenarios} scenarios from thin air.`
+      ];
+      say(cheers[Math.floor(Math.random() * cheers.length)], 3200);
       goHome();
-    } finally { busy = false; }
+    } finally {
+      busy = false; btn.disabled = false;
+    }
   }
-  lever.addEventListener("click", startPickling);
+
+  /* reveal on scroll */
+  const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add("in")), { threshold: .1 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+  /* welcome */
+  setTimeout(() => say("Welcome to my laboratory… paste a requirement! 🧙", 3200), 800);
 </script>
 </body>
 </html>
