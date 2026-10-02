@@ -1,51 +1,67 @@
 # AI Test Case & Gherkin Generator
 
-Turn product requirements and user stories into ready-to-run **Gherkin feature files** — with an
-AI engine (Azure OpenAI) and an offline rule-based engine that works with no API key.
+Turn product requirements and user stories into ready-to-run **Gherkin feature files** —
+through a CLI or a web UI — with an AI engine (Azure OpenAI) and an offline rule-based
+engine that works with no API key.
 
 ## How it works
 
-```
-requirement.md  ──►  cli.py  ──►  AI engine (Azure OpenAI)  ──►  feature file
-                              └─►  Rule engine (offline)    ──►  feature file
+```mermaid
+flowchart LR
+    A[📝 Requirement<br/>story + acceptance criteria] --> B{Engine?}
+    B -->|Azure OpenAI configured| C[🤖 AI engine<br/>QA prompt → feature file]
+    B -->|offline / --engine rule| D[⚙️ Rule engine<br/>parse → scenarios → outlines]
+    C --> E[📄 Feature model]
+    D --> E
+    E --> F[📦 Export<br/>gherkin · json · markdown]
+    E --> G[📊 Coverage report]
+    E --> H[🔍 Gherkin lint]
 ```
 
-- **AI engine** (`src/ai_engine.py`) — sends the requirement to Azure OpenAI with a
-  QA-engineer system prompt; returns a clean `.feature` file (happy path, edge cases,
-  negative scenarios, Scenario Outlines with Examples).
-- **Rule engine** (`src/rule_engine.py`) — parses `As a / I want / So that` stories plus
-  `Acceptance Criteria` bullets and generates structured scenarios, including
-  `When ... then ...` splitting and heuristic negative scenarios (validation,
-  unauthorized access, not found). Zero dependencies, zero network calls.
+**Step by step:**
 
-## Setup
+1. **Write your requirement** — a markdown file with a `As a / I want / So that` story
+   plus `Acceptance Criteria` bullets (or paste it into the web UI).
+2. **Pick an engine** — `auto` uses Azure OpenAI when your key is configured,
+   otherwise the offline rule engine. Override with `--engine ai|rule`.
+3. **Generate** — each criterion becomes a `Scenario`; `When ... then ...` lines are
+   split into steps; value lists like `(admin, user, guest)` become
+   `Scenario Outlines` with `Examples` tables; negative scenarios
+   (validation, unauthorized access, not found) are added automatically.
+4. **Export** — Gherkin `.feature`, JSON test catalog, or Markdown test plan.
+5. **Verify** — `--report` shows scenario coverage per requirement,
+   `--lint` catches structural problems (missing Given/When/Then, duplicates).
+
+## Web UI
 
 ```bash
-git clone https://github.com/dharshuadhi/ai-gherkin-generator.git
-cd ai-gherkin-generator
 pip install -r requirements.txt
+python app.py
 ```
 
-For the AI engine, copy `.env.example` to `.env` and fill in your Azure OpenAI values:
+Open http://127.0.0.1:5000 — paste a story, choose engine and format, and get the
+generated file in the browser with coverage and lint results, plus a download button.
+
+## CLI
 
 ```bash
-cp .env.example .env
-```
-
-## Usage
-
-```bash
-# Auto: AI when configured, otherwise the offline rule engine
+# Auto engine, Gherkin output
 python -m src.cli -i examples/login_story.md -o login.feature
 
-# Force the offline engine (no API key needed)
-python -m src.cli -i examples/login_story.md --engine rule -o login.feature
+# Offline rule engine, JSON catalog, with coverage + lint
+python -m src.cli -i examples/login_story.md --engine rule --format json --report --lint -o login.json
 
-# Pipe a requirement via stdin
+# Markdown test plan
+python -m src.cli -i examples/login_story.md --format markdown -o plan.md
+
+# Batch: convert a folder of stories
+python -m src.cli -i stories/ -o features/
+
+# Pipe via stdin
 cat mystory.md | python -m src.cli --engine rule
 ```
 
-Input format (markdown):
+Input format:
 
 ```markdown
 # Password reset
@@ -61,6 +77,27 @@ Acceptance Criteria:
 
 See [`examples/login.feature`](examples/login.feature) for generated output.
 
+## Features
+
+- 🤖 **AI engine** — Azure OpenAI with a QA-engineer system prompt
+- ⚙️ **Offline rule engine** — zero dependencies, zero network calls
+- 🧬 **Scenario Outlines** — parenthesized value lists become `Examples` tables
+- 🛡️ **Negative scenarios** — validation, auth, and not-found cases auto-added
+- 📦 **Multi-format export** — Gherkin, JSON catalog, Markdown test plan
+- 📊 **Coverage reports** — positive/negative/outline counts per requirement
+- 🔍 **Gherkin lint** — missing steps, duplicates, empty scenarios
+- 🌐 **Web UI** — generate, preview, and download in the browser
+- 📁 **Batch mode** — convert whole folders of stories at once
+
+## Setup
+
+```bash
+git clone https://github.com/dharshuadhi/ai-gherkin-generator.git
+cd ai-gherkin-generator
+pip install -r requirements.txt
+cp .env.example .env   # fill in Azure OpenAI values for the AI engine
+```
+
 ## Tests
 
 ```bash
@@ -70,13 +107,17 @@ python -m unittest discover -s tests -v
 ## Project structure
 
 ```
+app.py            Flask web UI
 src/
-  cli.py          argument parsing, engine selection, I/O
+  cli.py          argument parsing, engine selection, batch mode
   ai_engine.py    Azure OpenAI client + generation
-  rule_engine.py  offline parser + Gherkin renderer
+  rule_engine.py  offline parser + structured Feature model + Gherkin renderer
+  formats.py      JSON catalog + Markdown test plan renderers
+  coverage.py     coverage analysis + report
+  lint.py         Gherkin structural lint
   prompts.py      system prompt for the AI engine
 examples/         sample requirement + generated feature file
-tests/            unit tests for the rule engine
+tests/            unit tests (rule engine, outlines, formats, coverage, lint)
 ```
 
 ## License
